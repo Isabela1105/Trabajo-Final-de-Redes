@@ -42,7 +42,7 @@ datos descargados sin construir el dataset propio.
 | Jeremy Santiago Caicedo Cabezas | [@JeremyCaicedo](https://github.com/JeremyCaicedo) | 2210721 | Discriminador y pérdidas |
 | Cristian Fabian Muñoz Piedrahita | [@CristianMP355](https://github.com/CristianMP355) | 2230865 | Entrenamiento |
 | Juan Sebastian Castillo Acevedo | [@Juansec01](https://github.com/Juansec01) | 2231921 | Evaluación y demo |
-| Isabela | [@Isabela1105](https://github.com/Isabela1105) | _(completar)_ | CI/CD, integración e informe |
+| Isabela Cabezas Obregon| [@Isabela1105](https://github.com/Isabela1105) | 2226013 | CI/CD, integración e informe |
 
 > **Nota:** el nombre y código de la última fila se completan cuando el equipo confirme el dato.
 > El rol se puede intercambiar antes de crear las ramas; el plan de commits está diseñado para
