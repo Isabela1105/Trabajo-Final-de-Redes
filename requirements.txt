@@ -1,0 +1,14 @@
+# Dependencias de ejecución.
+# Python 3.11 recomendado.
+#
+# Nota Windows: TensorFlow >= 2.11 no tiene soporte GPU nativo.
+# Para entrenar con GPU se usa WSL2, Colab o Kaggle.
+tensorflow==2.16.1
+numpy==1.26.4
+Pillow==10.4.0
+PyYAML==6.0.2
+matplotlib==3.9.2
+scikit-image==0.24.0
+pandas==2.2.2
+tqdm==4.66.5
+gradio==4.44.1

@@ -1,0 +1,11 @@
+# Dependencias de desarrollo y CI.
+-r requirements.txt
+
+pytest==8.3.3
+pytest-cov==5.0.0
+ruff==0.6.9
+black==24.8.0
+pre-commit==3.8.0
+ipykernel==6.29.5
+nbconvert==7.16.4
+nbstripout==0.7.1

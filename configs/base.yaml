@@ -1,0 +1,40 @@
+# Configuración principal de entrenamiento (256x256).
+# Los valores se cargan con src/gan/config.py.
+# No cambiar sin registrar la decisión en docs/DECISIONES.md y en el PR.
+
+seed: 42
+
+data:
+  # Cada carpeta debe tener subcarpetas `input/` y `target/` con los mismos nombres.
+  train_dir: data/processed/train
+  val_dir: data/processed/val
+  test_dir: data/processed/test
+  image_size: 256
+  batch_size: 2
+  num_parallel_calls: 4
+
+model:
+  ngf: 64
+  ndf: 64
+  n_downsample: 8
+  dropout: 0.5
+  norm: instance
+
+train:
+  epochs: 100
+  lr_g: 0.0002
+  lr_d: 0.0002
+  beta_1: 0.5
+  beta_2: 0.999
+  lambda_l1: 100.0
+  label_smoothing: 0.0
+  mixed_precision: true
+  clip_norm: 1.0
+  sample_interval: 5
+  checkpoint_interval: 1
+  early_stopping_patience: 15
+  max_steps: null
+
+output:
+  dir: outputs/base
+  save_samples: true

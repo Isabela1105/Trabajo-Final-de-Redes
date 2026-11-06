@@ -1,0 +1,39 @@
+# Configuración mínima para tests y CI.
+# Debe correr en CPU en menos de ~2 minutos.
+# Usa la muestra sintética generada por scripts/make_synthetic_sample.py.
+
+seed: 42
+
+data:
+  train_dir: data/sample/train
+  val_dir: data/sample/val
+  test_dir: data/sample/val
+  image_size: 64
+  batch_size: 2
+  num_parallel_calls: 1
+
+model:
+  ngf: 8
+  ndf: 8
+  n_downsample: 4
+  dropout: 0.5
+  norm: instance
+
+train:
+  epochs: 1
+  lr_g: 0.0002
+  lr_d: 0.0002
+  beta_1: 0.5
+  beta_2: 0.999
+  lambda_l1: 100.0
+  label_smoothing: 0.0
+  mixed_precision: false
+  clip_norm: 1.0
+  sample_interval: 1
+  checkpoint_interval: 1
+  early_stopping_patience: 1
+  max_steps: 2
+
+output:
+  dir: outputs/smoke
+  save_samples: true

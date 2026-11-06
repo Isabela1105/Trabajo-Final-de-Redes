@@ -1,0 +1,43 @@
+# Configuración de herramientas de calidad.
+# No empaqueta el proyecto: se ejecuta desde la raíz con `python -m src.gan...`.
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+extend-exclude = '''
+/(
+    \.venv
+  | data
+  | outputs
+  | \.ipynb_checkpoints
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [".venv", "data", "outputs", ".ipynb_checkpoints"]
+
+[tool.ruff.lint]
+# E/F: errores y pyflakes; I: imports; B: bugs; UP: upgrades; SIM: simplificaciones.
+select = ["E", "F", "I", "B", "UP", "SIM"]
+# E501 se ignora porque black ya controla el ancho de línea.
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Los tests pueden usar nombres largos y asserts.
+"tests/*" = ["S101"]
+# Los notebooks suelen tener imports no usados en celdas.
+"*.ipynb" = ["E402", "F401"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "slow: pruebas que tardan más de 10 segundos",
+    "gpu: pruebas que requieren GPU",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]

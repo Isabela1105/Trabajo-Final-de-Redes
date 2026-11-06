@@ -1,0 +1,62 @@
+# CD: se ejecuta solo al crear un tag v* (ej. v1.0.0).
+# Construye el informe en DOCX, adjunta el PDF si existe y crea el GitHub Release.
+# No reentrena el modelo ni despliega la app automáticamente.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publicar entrega
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+
+      - name: Construir artefactos del informe
+        run: |
+          mkdir -p dist
+          if [ -f report/informe.md ]; then
+            # DOCX no requiere LaTeX y es el formato más robusto en CI.
+            pandoc report/informe.md \
+              --citeproc \
+              --bibliography=report/referencias.bib \
+              -o dist/informe.docx \
+              || pandoc report/informe.md -o dist/informe.docx
+          fi
+          if [ -f report/informe.pdf ]; then
+            cp report/informe.pdf dist/informe.pdf
+          fi
+          echo "Entrega del proyecto. Ver README.md para instrucciones." > dist/LEEME.txt
+
+      - name: Crear GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Entrega ${{ github.ref_name }}"
+          generate_release_notes: true
+          files: dist/*
+          body: |
+            ## Entrega del miniproyecto
+
+            - Tag: `${{ github.ref_name }}`
+            - Commit: `${{ github.sha }}`
+            - Informe: `dist/informe.docx` (y PDF si estaba disponible)
+            - Instrucciones: ver `README.md`
+
+            ### Checklist rápido
+            - [ ] El informe corresponde a este tag.
+            - [ ] Los pesos del modelo están enlazados en el README o en este release.
+            - [ ] La demo funciona con las instrucciones del README.

@@ -1,0 +1,46 @@
+# CODEOWNERS
+#
+# Usuarios reales del equipo. Este archivo enruta las revisiones. Para que sea obligatorio, activar
+# "Require review from Code Owners" en la protección de main (ver docs/CI_CD.md).
+#
+# IMPORTANTE: en CODEOWNERS gana la ÚLTIMA regla que coincide.
+# Por eso las reglas generales van primero y las específicas al final.
+
+# ── Reglas generales ─────────────────────────────────────────────
+*                           @Isabela1105
+/docs/                       @Isabela1105
+/README.md                   @Isabela1105
+
+# ── Datos y dataset ──────────────────────────────────────────────
+/src/gan/data/              @Isabellaortizher-collab
+/scripts/build_dataset.py   @Isabellaortizher-collab
+/scripts/check_dataset.py   @Isabellaortizher-collab
+/data/README.md              @Isabellaortizher-collab
+/docs/DATASET.md             @Isabellaortizher-collab
+
+# ── Generador ────────────────────────────────────────────────────
+/src/gan/models/blocks.py      @Juanpablodavila
+/src/gan/models/generator.py   @Juanpablodavila
+
+# ── Discriminador y pérdidas ─────────────────────────────────────
+/src/gan/models/discriminator.py @JeremyCaicedo
+/src/gan/losses.py               @JeremyCaicedo
+
+# ── Entrenamiento y configuración ────────────────────────────────
+/src/gan/train.py            @CristianMP355
+/src/gan/config.py           @CristianMP355
+/configs/                    @CristianMP355
+/src/gan/utils/              @CristianMP355 @Juansec01
+
+# ── Evaluación, inferencia y demo ────────────────────────────────
+/src/gan/evaluate.py         @Juansec01
+/src/gan/infer.py            @Juansec01
+/app/                        @Juansec01
+/docs/img/                   @Juansec01
+
+# ── CI/CD y plantillas ───────────────────────────────────────────
+/.github/                    @Isabela1105
+/report/                     @Isabela1105
+/CONTRIBUTING.md             @Isabela1105
+/docs/CI_CD.md               @Isabela1105
+/docs/PARTICIPACION.md       @Isabela1105

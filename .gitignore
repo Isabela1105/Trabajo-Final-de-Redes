@@ -1,0 +1,64 @@
+# ── Entornos virtuales ──────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Python ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# ── Notebooks ───────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# ── Datos y resultados (compartir por release/Drive/HF) ────────
+data/raw/
+data/processed/
+data/sample/*
+!data/sample/.gitkeep
+outputs/
+checkpoints/
+runs/
+wandb/
+*.tfevents.*
+*.ckpt.index
+*.ckpt.data-*
+*.ckpt.meta
+
+# ── Pesos de modelos ────────────────────────────────────────────
+*.h5
+*.keras
+*.pt
+*.pth
+*.onnx
+*.safetensors
+*.pkl
+*.joblib
+
+# ── Secretos y configuración local ─────────────────────────────
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# ── Sistema ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editores ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+
+# ── Logs ───────────────────────────────────────────────────────
+*.log
