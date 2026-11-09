@@ -7,5 +7,5 @@ ruff==0.6.9
 black==24.8.0
 pre-commit==3.8.0
 ipykernel==6.29.5
-nbconvert==7.16.4
+nbconvert==7.17.2
 nbstripout==0.7.1
