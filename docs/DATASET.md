@@ -48,7 +48,7 @@ guardan en el manifiesto para poder reproducir el par exacto.
 
 | Operación | Parámetros | Simula |
 |---|---|---|
-| Desenfoque gaussiano | kernel 3–7, sigma 0.5–2.0 | Foto movida / lente sucia |
+| Desenfoque gaussiano | sigma (radio) 0.5–2.0 | Foto movida / lente sucia |
 | Ruido gaussiano | sigma 5–25 (escala 0–255) | Grano de película / sensor |
 | Compresión JPEG | calidad 20–60 | Escaneo viejo / recompresión |
 | Baja resolución | factor 2–4, luego upscale | Foto pequeña ampliada |
@@ -76,7 +76,6 @@ un solo tipo de daño.
 degradations:
   blur:
     probability: 0.7
-    kernel: [3, 7]
     sigma: [0.5, 2.0]
   noise:
     probability: 0.6
@@ -157,23 +156,22 @@ data/
 │   └── ...
 ├── processed/
 │   ├── train/
-│   │   ├── fuente_001_var0_input.png
-│   │   ├── fuente_001_var0_target.png
-│   │   └── ...
-│   ├── val/
-│   └── test/
+│   │   ├── input/           # foto degradada: <fuente>_v<N>.png
+│   │   └── target/          # foto limpia, con el MISMO nombre
+│   ├── val/                 # misma estructura
+│   └── test/                # misma estructura
 ├── sample/                  # 8 imágenes sintéticas para tests/CI
-├── manifest.csv             # fuente, split, variante, parámetros, semilla
+├── sources.csv              # autor, licencia y enlace de cada foto fuente
+├── manifest.csv             # un par por fila: split, degradaciones, semilla
 └── README.md                # ficha del dataset
 ```
 
 ### Formato del manifiesto
 
 ```csv
-source_id,split,variant,input_path,target_path,seed,degradations
-fuente_001,train,0,data/processed/train/fuente_001_var0_input.png,data/processed/train/fuente_001_var0_target.png,42,"blur=3;noise=12;jpeg=35"
-fuente_001,train,1,...,...,43,"blur=5;scratch=2"
-fuente_002,val,0,...,...,44,"fade=0.4;dust=20"
+id,source_id,source_path,split,variant,input_path,target_path,degradations,seed
+foto_030_v0,foto_030,data/raw/foto_030.jpg,train,0,data/processed/train/input/foto_030_v0.png,data/processed/train/target/foto_030_v0.png,downscale;blur;noise;dust,42129000
+foto_030_v1,foto_030,data/raw/foto_030.jpg,train,1,...,...,blur;jpeg,42129001
 ```
 
 Ventajas:
@@ -269,8 +267,7 @@ python scripts/build_dataset.py \
   --raw data/raw \
   --out data/processed \
   --variants 3 \
-  --seed 42 \
-  --config configs/base.yaml
+  --seed 42
 
 # Validar
 python scripts/check_dataset.py --root data/processed --manifest data/manifest.csv
@@ -279,7 +276,7 @@ python scripts/check_dataset.py --root data/processed --manifest data/manifest.c
 python scripts/make_synthetic_sample.py --out data/sample --n 8 --size 64
 
 # Estadísticas
-python scripts/build_dataset.py --stats --manifest data/manifest.csv
+python scripts/dataset_report.py
 ```
 
 ---
