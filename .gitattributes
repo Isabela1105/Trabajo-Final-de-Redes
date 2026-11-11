@@ -1,0 +1,5 @@
+* text=auto
+report/** linguist-documentation
+*.bib linguist-documentation
+Makefile linguist-vendored
+report/Makefile linguist-vendored
