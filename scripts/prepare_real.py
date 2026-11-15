@@ -1,13 +1,13 @@
 """Prepara las fotos antiguas REALES para evaluación cualitativa (no se usan para métricas).
 
-Lee las fotos descargadas de `data/raw/real_originales/` (esa carpeta no se sube a git) y deja
-copias listas en `data/real/real_001.jpg`, `real_002.jpg`... (RGB, lado mayor <= 1024 px).
-También crea/actualiza `data/real_sources.csv`, donde se anota el autor, la licencia y el
-enlace de cada foto. Se puede correr varias veces: las fotos ya registradas no se repiten.
+Lee las fotos descargadas de `data/raw/real_originales/` y deja copias listas en
+`data/raw/real/real_001.jpg`, `real_002.jpg`... (RGB, lado mayor <= 1024 px). Ninguna de las dos
+carpetas se sube a git. Solo se sube la tabla `data/real_sources.csv`, donde se anota la
+procedencia de cada foto. Se puede correr varias veces: las fotos ya registradas no se repiten.
 
 Uso (desde la raíz del repositorio):
     python scripts/prepare_real.py
-    python scripts/prepare_real.py --licencia "Dominio público (Library of Congress)"
+    python scripts/prepare_real.py --autor "Desconocido (Pinterest)" --anio "s.f."
 """
 
 from __future__ import annotations
@@ -45,8 +45,21 @@ def write_rows(path: Path, rows: list[dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
-def prepare(src: Path, out: Path, sources_path: Path, licencia: str = PENDIENTE) -> dict[str, int]:
-    """Convierte las fotos nuevas de `src` y las registra. Devuelve un resumen con conteos."""
+def prepare(
+    src: Path,
+    out: Path,
+    sources_path: Path,
+    licencia: str = PENDIENTE,
+    autor: str = PENDIENTE,
+    anio: str = PENDIENTE,
+    descripcion: str = PENDIENTE,
+    url: str = PENDIENTE,
+) -> dict[str, int]:
+    """Convierte las fotos nuevas de `src` y las registra. Devuelve un resumen con conteos.
+
+    Los datos de procedencia (licencia, autor, año, descripción, url) se aplican a todas las
+    fotos nuevas; los que no se indiquen quedan "POR COMPLETAR" para editarlos a mano.
+    """
     rows = read_rows(sources_path)
     known = {r["original"] for r in rows}
     numbers = [
@@ -69,11 +82,11 @@ def prepare(src: Path, out: Path, sources_path: Path, licencia: str = PENDIENTE)
             {
                 "archivo": name,
                 "original": p.name,
-                "descripcion": PENDIENTE,
-                "anio": PENDIENTE,
-                "autor": PENDIENTE,
+                "descripcion": descripcion,
+                "anio": anio,
+                "autor": autor,
                 "licencia": licencia,
-                "url": PENDIENTE,
+                "url": url,
             }
         )
         next_n += 1
@@ -87,14 +100,24 @@ def prepare(src: Path, out: Path, sources_path: Path, licencia: str = PENDIENTE)
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--src", type=Path, default=Path("data/raw/real_originales"))
-    parser.add_argument("--out", type=Path, default=Path("data/real"))
+    parser.add_argument("--out", type=Path, default=Path("data/raw/real"))
     parser.add_argument("--sources", type=Path, default=Path("data/real_sources.csv"))
-    parser.add_argument("--licencia", default=PENDIENTE, help="licencia para las fotos nuevas")
+    for campo in ("licencia", "autor", "anio", "descripcion", "url"):
+        parser.add_argument(f"--{campo}", default=PENDIENTE, help=f"{campo} de las fotos nuevas")
     args = parser.parse_args()
 
     if not args.src.exists():
         raise SystemExit(f"No existe la carpeta {args.src}. Créala y copia ahí las fotos.")
-    res = prepare(args.src, args.out, args.sources, args.licencia)
+    res = prepare(
+        args.src,
+        args.out,
+        args.sources,
+        licencia=args.licencia,
+        autor=args.autor,
+        anio=args.anio,
+        descripcion=args.descripcion,
+        url=args.url,
+    )
     print(f"Fotos nuevas: {res['nuevas']}. Total registradas: {res['total']}.")
     print(f"Filas con campos por completar: {res['incompletas']} (edita {args.sources}).")
 

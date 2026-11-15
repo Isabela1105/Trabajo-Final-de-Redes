@@ -103,3 +103,21 @@ def test_una_foto_completa_no_cuenta_como_incompleta(tmp_path):
     fila.update(descripcion="Familia", anio="1920", autor="Anónimo", licencia="PD", url="http://x")
     write_rows(csv_path, [fila])
     assert prepare(src, out, csv_path)["incompletas"] == 0
+
+
+def test_los_datos_de_procedencia_se_aplican_a_todas_las_fotos_nuevas(tmp_path):
+    src, out, csv_path = _carpetas(tmp_path)
+    _foto(src / "a.jpg")
+    _foto(src / "b.jpg")
+    resumen = prepare(
+        src,
+        out,
+        csv_path,
+        licencia="Sin verificar",
+        autor="Desconocido",
+        anio="s.f.",
+        descripcion="Foto antigua",
+        url="No disponible",
+    )
+    assert resumen["incompletas"] == 0
+    assert {f["autor"] for f in read_rows(csv_path)} == {"Desconocido"}
