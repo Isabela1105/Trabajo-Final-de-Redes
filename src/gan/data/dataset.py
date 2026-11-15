@@ -24,13 +24,29 @@ def list_sources(raw_dir: str | Path) -> list[Path]:
     return sorted(files)
 
 
+def to_rgb(img: Image.Image) -> Image.Image:
+    """Convierte cualquier imagen a RGB de forma segura.
+
+    - Aplica la rotación guardada en los metadatos EXIF (fotos de celular "acostadas").
+    - Si tiene transparencia (alfa), la pone sobre fondo BLANCO en vez de negro.
+    """
+    img = ImageOps.exif_transpose(img)
+    tiene_alfa = img.mode in ("RGBA", "LA", "PA") or (
+        img.mode == "P" and "transparency" in img.info
+    )
+    if tiene_alfa:
+        rgba = img.convert("RGBA")
+        fondo = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+        return Image.alpha_composite(fondo, rgba).convert("RGB")
+    return img.convert("RGB")
+
+
 def prepare_image(img: Image.Image, size: int = IMAGE_SIZE) -> Image.Image:
-    """Pasa a RGB y deja la imagen en size x size SIN deformarla.
+    """Pasa a RGB (con EXIF y alfa resueltos) y deja la imagen en size x size SIN deformarla.
 
     Se reduce hasta que el lado menor mida `size` y se recorta el centro.
     """
-    img = img.convert("RGB")
-    return ImageOps.fit(img, (size, size), method=Image.LANCZOS)
+    return ImageOps.fit(to_rgb(img), (size, size), method=Image.LANCZOS)
 
 
 def to_array(img: Image.Image) -> np.ndarray:

@@ -20,6 +20,7 @@
 | Resolución original mínima | ancho 721 px, alto 719 px (todas las fuentes miden al menos 512 px por lado) |
 | Proporción del split | 80 % / 10 % / 10 % (por foto fuente) |
 | Semilla base | 42 |
+| Fotos reales | 12 |
 
 ## Procedencia
 
@@ -98,6 +99,26 @@ Tablas completas en `docs/dataset_stats.md`. Ejemplos visuales: `docs/img/datase
 Tamaño original de las fuentes: ancho de 721 a 7953 px (media 2392), alto de 719 a 9941 px
 (media 2277).
 
+## Conjunto real (evaluación cualitativa)
+
+Además de los pares sintéticos, hay un grupo pequeño de **fotos antiguas reales** para mirarlas
+con los ojos después de entrenar: se las damos al modelo y se revisa si las restaura bien.
+
+- **Qué son:** 12 fotos antiguas sin pareja limpia (no existe la versión restaurada).
+- **Para qué sirven:** solo inspección visual. **No se usan para entrenar ni para métricas.**
+- **Dónde están:** en `data/raw/real/` (`real_001.jpg`...), separadas de `train/val/test`. Sus
+  nombres `real_NNN` no aparecen en el manifiesto y un test lo comprueba.
+- **Procedencia:** descargadas de Pinterest, con autor desconocido y licencia sin verificar.
+  Por eso **no se suben a git ni se publican**; se comparten por Drive solo dentro del equipo.
+  En el repositorio solo está la tabla `data/real_sources.csv`.
+- **Cómo se preparan:** `python scripts/prepare_real.py` las endereza (EXIF), pone la
+  transparencia sobre blanco, las reduce a 1024 px como máximo y las registra en la tabla.
+
+Limitaciones de este grupo: son pocas (12); se eligieron a mano, no al azar; vienen de una sola
+fuente; y no se puede garantizar que ninguna haya sido retocada o restaurada antes de llegar a
+Pinterest. Si el repositorio se hace público, hay que cambiarlas por fotos de dominio público
+(por ejemplo, de la Library of Congress).
+
 ## Limitaciones
 
 - **Predominan las fotos de DIV2K** (66 % de las fuentes): estilo y resolución muy parecidos
@@ -111,6 +132,7 @@ Tamaño original de las fuentes: ancho de 721 a 7953 px (media 2392), alto de 71
 - **Posibles sesgos de contenido** (escenas nocturnas, interiores, personas): por revisar con
   una muestra manual antes del informe final.
 - El modelo puede inventar detalles que no estaban en la foto; no sirve para uso forense.
+- **El conjunto real es pequeño y de procedencia no verificada** (ver la sección anterior).
 
 ## Licencia y uso
 
@@ -118,3 +140,4 @@ Tamaño original de las fuentes: ancho de 721 a 7953 px (media 2392), alto de 71
 - Las fotos fuente de DIV2K y Pexels son de terceros: **no se publican ni se redistribuyen**.
   Los pares se comparten solo dentro del equipo, para uso académico del curso.
 - No se publican fotos personales sin consentimiento de las personas que aparecen en ellas.
+- Las fotos del conjunto real (Pinterest, autor desconocido) **no se suben a git**.

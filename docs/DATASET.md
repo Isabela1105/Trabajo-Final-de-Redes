@@ -246,6 +246,18 @@ Completar esta plantilla:
 
 ---
 
+### Conjunto real para evaluación cualitativa
+
+Grupo aparte de 12 fotos antiguas reales (carpeta `data/raw/real/`, tabla `data/real_sources.csv`).
+No se usan para entrenar ni para métricas, y no se mezclan con `train/val/test`.
+
+- **Autor y licencia:** descargadas de Pinterest; el autor es desconocido y la licencia no está
+  verificada. Se registra así en la tabla, tal cual, sin inventar datos.
+- **Privacidad y derechos:** como no se pueden verificar los derechos, **las fotos no se suben a
+  git ni se publican**; se comparten por Drive solo dentro del equipo, para uso académico.
+- **Limitaciones:** pocas fotos, selección manual, una sola fuente, y posible retoque previo.
+- **Si se publica el repositorio:** reemplazarlas por fotos de dominio público.
+
 ## 8. Estadísticas para el informe
 
 Generar con `scripts/build_dataset.py --stats` y reportar:

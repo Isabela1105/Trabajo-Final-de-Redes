@@ -58,3 +58,8 @@ def test_ficha_pares_por_split_coincide_con_el_manifiesto(ficha, manifest):
 
 def test_ficha_semilla_base_coincide_con_el_manifiesto(ficha, manifest):
     assert _numero(ficha, "Semilla base") == int(manifest["seed"].min()) // 1_000_000
+
+
+def test_ficha_fotos_reales_coincide_con_la_tabla(ficha):
+    tabla = pd.read_csv(ROOT / "data" / "real_sources.csv")
+    assert _numero(ficha, "Fotos reales") == len(tabla)
