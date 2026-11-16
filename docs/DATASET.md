@@ -260,7 +260,8 @@ No se usan para entrenar ni para métricas, y no se mezclan con `train/val/test`
 
 ## 8. Estadísticas para el informe
 
-Generar con `scripts/build_dataset.py --stats` y reportar:
+Generar con `python scripts/dataset_report.py` (escribe `docs/dataset_stats.md` y
+`docs/img/dataset_grid.png`) y reportar:
 
 - Número de fuentes y pares por split.
 - Resolución original (media, mín, máx).
@@ -268,6 +269,18 @@ Generar con `scripts/build_dataset.py --stats` y reportar:
 - Distribución de severidad (leve, media, fuerte).
 - 4–8 ejemplos visuales en `docs/img/dataset_grid.png`.
 - Tiempo de construcción del dataset.
+
+**Cifras finales (v1.0).** Salen de `data/manifest.csv`, `data/real_sources.csv` y
+`docs/dataset_stats.md`:
+
+| Dato | Valor |
+|---|---|
+| Fuentes | 152 (DIV2K 100, Pexels 30, propias 22) |
+| Pares | 456 (366 train / 45 val / 45 test) |
+| Semilla base | 42 |
+| Conjunto real (solo evaluación cualitativa) | 12 fotos |
+| Tiempo de construcción | unos 30 s en un computador con Windows (152 fuentes, 456 pares) |
+| Distribución de severidad | no se midió |
 
 ---
 
@@ -295,13 +308,14 @@ python scripts/dataset_report.py
 
 ## 10. Checklist del dataset
 
-- [ ] 150+ fuentes (ideal 300+).
-- [ ] 3 variantes por fuente (o al menos 2).
-- [ ] Splits por fuente, sin fuga.
-- [ ] Manifiesto con semilla y parámetros.
-- [ ] `check_dataset.py` pasa.
-- [ ] `data/README.md` completo.
-- [ ] Ejemplos visuales en `docs/img/`.
-- [ ] Licencias y consentimientos documentados.
-- [ ] `data/raw` y `data/processed` fuera de git.
-- [ ] Test de no fuga en `tests/test_dataset.py`.
+- [x] 150+ fuentes (152; el ideal de 300+ no se alcanzó).
+- [x] 3 variantes por fuente.
+- [x] Splits por fuente, sin fuga.
+- [x] Manifiesto con semilla y degradaciones aplicadas.
+- [x] `check_dataset.py` pasa.
+- [x] `data/README.md` completo.
+- [x] Ejemplos visuales en `docs/img/`.
+- [ ] Licencias y consentimientos documentados (las licencias están en `data/sources.csv`;
+  falta documentar el consentimiento de las personas que aparecen en fotos propias).
+- [x] `data/raw` y `data/processed` fuera de git.
+- [x] Test de no fuga en `tests/test_dataset.py`.
