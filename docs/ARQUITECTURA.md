@@ -167,7 +167,9 @@ restaurar, para que no falten slots en el checkpoint.
 - `logs/`: escalares `loss_g`, `loss_d`, `loss_adv`, `loss_l1`, `val_l1` + imágenes
   `input | target | prediction` por época (TensorBoard).
 - `samples/epoch_XXXX.png`: grid matplotlib guardado atómicamente.
-- `metrics.csv`: una fila por época y split (`train` lleva las pérdidas; `val`, el L1).
+- `metrics.csv`: columnas `epoch, split, loss_g, loss_d, l1, psnr, ssim`. Hay una fila por época y
+  split: `train` lleva las pérdidas; `val` lleva L1, PSNR y SSIM (`max_val=2.0` porque las
+  imágenes están en `[-1,1]`).
 - El generador se reconstruye desde los parámetros del YAML + `build_generator`, sin
   hardcodear arquitectura en el checkpoint.
 
@@ -186,8 +188,11 @@ restaurar, para que no falten slots en el checkpoint.
 ### 5.7 Ablación
 
 `train.use_gan: false` desactiva la actualización de D y el término adversarial: el
-generador queda como U-Net solo L1 (línea base). Es el único cambio necesario para la
-ablación; el resto del pipeline (métricas, muestras, checkpoints) es idéntico.
+generador queda como U-Net solo L1 (línea base). `configs/ablation_l1.yaml` es la receta
+lista para correrla con `python -m src.gan.train --config configs/ablation_l1.yaml`.
+El resto del pipeline (métricas, muestras, checkpoints) es idéntico, de modo que la
+comparación con Pix2Pix es justa. `tests/test_smoke_train.py` congela el orden D→G y verifica
+que, en ablación, D no se actualiza.
 
 ---
 
