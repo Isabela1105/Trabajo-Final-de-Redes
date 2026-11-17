@@ -43,7 +43,7 @@ jobs:
           echo "Entrega del proyecto. Ver README.md para instrucciones." > dist/LEEME.txt
 
       - name: Crear GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: "Entrega ${{ github.ref_name }}"
           generate_release_notes: true
