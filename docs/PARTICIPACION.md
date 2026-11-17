@@ -26,7 +26,7 @@ Actualizar al final de cada semana. Al entregar, esta tabla debe coincidir con G
 - **Aporte al informe:** sección Dataset, ética y licencias.
 - **Aporte a la defensa:** recolección, degradaciones, splits.
 
-### Juan Pablo D�vila Moncayo (@Juanpablodavila)
+### Juan Pablo D�vila Moncayo (@Juanpablodavila)
 
 - **Módulos:** `src/gan/models/blocks.py`, `src/gan/models/generator.py`.
 - **PRs:** #...
@@ -42,13 +42,21 @@ Actualizar al final de cada semana. Al entregar, esta tabla debe coincidir con G
 - **Aporte al informe:** PatchGAN, ecuaciones de pérdida.
 - **Aporte a la defensa:** λ = 100, BCE vs MSE, estabilidad.
 
-### Cristian Fabian Mu�oz Piedrahita (@CristianMP355)
+### Cristian Fabian Mu�oz Piedrahita (@CristianMP355)
 
-- **Módulos:** `src/gan/train.py`, `src/gan/config.py`, `configs/`.
-- **PRs:** #...
-- **Commits representativos:** ...
-- **Aporte al informe:** entrenamiento, hiperparámetros, experimentos.
-- **Aporte a la defensa:** `train_step`, checkpoints, reanudación.
+- **Módulos:** `src/gan/train.py`, `src/gan/config.py`, `src/gan/utils/viz.py`, `configs/`,
+  `tests/test_smoke_train.py`, `tests/test_train_integration.py`, sección 5 de
+  `docs/ARQUITECTURA.md`, bloque de entrenamiento de `docs/DEFENSA.md` y §6–§7 de
+  `docs/INFORME.md`.
+- **PRs (ramas locales, pendientes de push):** `feat/14-train-loop` (PR-D2),
+  `test/15-smoke-train` (PR-D3), `feat/23-train-integration` (PR-D4),
+  `feat/29-train-experiments` (PR-D5), `fix/34-colab-checkpoint` (PR-D6).
+- **Commits representativos:** bucle D→G y checkpoints (PR-D2), integración de builders y
+  `make_dataset` reales (PR-D4), métricas y ablación (PR-D5), blindaje de `--resume` (PR-D6).
+- **Aporte al informe:** hiperparámetros congelados en `configs/base.yaml`, citas del bloque de
+  entrenamiento (§6) y artefactos para el build del PDF (§7).
+- **Aporte a la defensa:** `train_step` con dos Adams y mixed precision, early stopping por L1
+  de validación, `--resume` a prueba de cortes en Colab y ablación sin GAN.
 
 ### Juan Sebastian Castillo Acevedo (@Juansec01)
 

@@ -2,6 +2,8 @@
 # Los valores se cargan con src/gan/config.py.
 # No cambiar sin registrar la decisión en docs/DECISIONES.md y en el PR.
 
+# HIPERPARÁMETROS FINALES CONGELADOS (PR-D6): la tabla del informe y la corrida de
+# resultados deben leer este archivo. Cualquier cambio aquí invalida los checkpoint guards.
 seed: 42
 
 data:
@@ -10,13 +12,13 @@ data:
   val_dir: data/processed/val
   test_dir: data/processed/test
   image_size: 256
-  batch_size: 2
+  batch_size: 2 # máximo estable en 256x256 con ngf/ndf=64 en una GPU de 16 GB
   num_parallel_calls: 4
 
 model:
   ngf: 64
   ndf: 64
-  n_downsample: 8
+  n_downsample: 8 # se traduce al argumento `niveles` del generador real en train.py
   dropout: 0.5
   norm: instance
   # Builders reales: se importan por ruta, sin hardcodear arquitectura en train.py.
@@ -34,8 +36,8 @@ train:
   beta_1: 0.5
   beta_2: 0.999
   lambda_l1: 100.0
-  label_smoothing: 0.0
-  mixed_precision: true
+  label_smoothing: 0.0 # la discriminator_loss real no expone este parámetro (se ignora con aviso)
+  mixed_precision: true # solo GPU; las pérdidas se calculan siempre en float32
   clip_norm: 1.0
   sample_interval: 5
   checkpoint_interval: 1

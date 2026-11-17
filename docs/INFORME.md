@@ -184,6 +184,17 @@ Usar `report/referencias.bib` y estilo IEEE. Mínimo:
 Citar figuras tomadas de otros sitios. No copiar texto sin cita. Si se usa una herramienta de
 IA para redactar, revisar y declarar según la política del curso.
 
+Para el bloque de entrenamiento (Rol D) conviene citar además:
+
+- Isola et al., 2017, ec. de `generator_loss` (BCE + `lambda_l1 · L1`) y el factor `0.5` de
+  `discriminator_loss`, tal como están implementadas en `src/gan/losses.py`.
+- Documentación de `tf.keras.mixed_precision` y `tf.train.CheckpointManager` para justificar
+  la pérdida en `float32` y el guardado atómico del YAML junto al checkpoint.
+- Wang et al., 2004 (SSIM): en nuestras imágenes normalizadas a `[-1,1]` se usa `max_val=2.0`
+  en `tf.image.ssim` / `tf.image.psnr` (ver `make_eval_step` en `src/gan/train.py`).
+- Las cifras de hiperparámetros vienen de `configs/base.yaml` (congeladas en PR-D6), no de una
+  transcripción manual: así la tabla del informe y la corrida no divergen.
+
 ---
 
 ## 7. Build del PDF
@@ -210,6 +221,19 @@ PDF desde Word.
 
 En CI, el workflow `release.yml` construye el PDF al crear el tag. Si LaTeX no está disponible,
 se adjunta el `.docx` y se documenta.
+
+Antes de compilar, el Rol D debe copiar los artefactos de la corrida final al árbol del informe:
+
+```bash
+cp outputs/base/samples/epoch_*.png docs/img/        # grid input | target | predicción
+cp outputs/base/metrics.csv report/metrics.csv       # curvas y tabla de resultados
+cp outputs/base/config.yaml report/config_final.yaml  # hiperparámetros congelados
+```
+
+`outputs/base/metrics.csv` tiene una fila por época y split (`train`, `val`); las curvas se
+generan desde ahí y las imágenes van en `docs/img/` porque Pandoc solo incrusta archivos que
+estén en el repositorio. Los eventos de TensorBoard (`outputs/base/logs/`) se citan como
+evidencia, pero no se incrustan en el PDF.
 
 ---
 
