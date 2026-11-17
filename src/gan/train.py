@@ -21,9 +21,10 @@ import inspect
 import json
 import os
 import time
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import tensorflow as tf
 
@@ -44,7 +45,11 @@ TensorBatch = tuple[tf.Tensor, tf.Tensor]
 # Componentes mínimos de smoke (NUNCA se usan en el resultado principal)
 # ---------------------------------------------------------------------------
 def build_smoke_generator(
-    image_size: int = 64, ngf: int = 8, n_downsample: int = 4, norm: str = "instance", dropout: float = 0.5
+    image_size: int = 64,
+    ngf: int = 8,
+    n_downsample: int = 4,
+    norm: str = "instance",
+    dropout: float = 0.5,
 ) -> tf.keras.Model:
     """Generador de una sola convolución, usado solo en pruebas de 2 pasos."""
     del ngf, n_downsample, norm, dropout  # la forma la fija `image_size`
@@ -55,7 +60,9 @@ def build_smoke_generator(
     return tf.keras.Model(inputs, outputs, name="smoke_generator")
 
 
-def build_smoke_discriminator(image_size: int = 64, ndf: int = 8, norm: str = "instance") -> tf.keras.Model:
+def build_smoke_discriminator(
+    image_size: int = 64, ndf: int = 8, norm: str = "instance"
+) -> tf.keras.Model:
     """Discriminador mínimo condicional, usado solo en pruebas de 2 pasos."""
     del image_size, ndf, norm
     input_image = tf.keras.Input(shape=(None, None, 3), name="input_image")
@@ -93,7 +100,9 @@ def smoke_discriminator_loss(
         )
     )
     fake = tf.reduce_mean(
-        tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros_like(fake_logits), logits=fake_logits)
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            labels=tf.zeros_like(fake_logits), logits=fake_logits
+        )
     )
     return 0.5 * (real + fake)
 
@@ -116,7 +125,9 @@ def _call_builder(builder: Callable[..., Any], config: Config) -> Any:
         **dict(config.model),
     }
     signature = inspect.signature(builder)
-    accepts_kwargs = any(p.kind is inspect.Parameter.VAR_KEYWORD for p in signature.parameters.values())
+    accepts_kwargs = any(
+        p.kind is inspect.Parameter.VAR_KEYWORD for p in signature.parameters.values()
+    )
     kwargs = (
         candidates
         if accepts_kwargs
@@ -145,7 +156,9 @@ def resolve_components(config: Config) -> tuple[Any, Any, Callable[..., Any], Ca
                 "reporta el bloqueo en GitHub en vez de modificarlo."
             ) from error
 
-    generator_fn = load(model_cfg.get("generator_builder", DEFAULT_GENERATOR_BUILDER), build_smoke_generator)
+    generator_fn = load(
+        model_cfg.get("generator_builder", DEFAULT_GENERATOR_BUILDER), build_smoke_generator
+    )
     discriminator_fn = load(
         model_cfg.get("discriminator_builder", DEFAULT_DISCRIMINATOR_BUILDER),
         build_smoke_discriminator,
@@ -155,7 +168,8 @@ def resolve_components(config: Config) -> tuple[Any, Any, Callable[..., Any], Ca
         f"{losses_module}:generator_loss", fallback=smoke_generator_loss if allow_fallback else None
     )
     discriminator_loss_fn = load(
-        f"{losses_module}:discriminator_loss", fallback=smoke_discriminator_loss if allow_fallback else None
+        f"{losses_module}:discriminator_loss",
+        fallback=smoke_discriminator_loss if allow_fallback else None,
     )
 
     generator = _call_builder(generator_fn, config)
@@ -193,7 +207,9 @@ def make_tf_dataset(
     )
     dataset = tf.data.Dataset.from_generator(pairs, output_signature=signature)
     if shuffle:
-        dataset = dataset.shuffle(buffer_size=max(8, batch_size * 4), seed=seed, reshuffle_each_iteration=True)
+        dataset = dataset.shuffle(
+            buffer_size=max(8, batch_size * 4), seed=seed, reshuffle_each_iteration=True
+        )
     return dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
 
@@ -204,13 +220,15 @@ def _apply_gradients(
     clip_norm: float,
 ) -> None:
     """Aplica clip de gradientes y el paso del optimizador indicado."""
-    pairs = [(grad, var) for grad, var in zip(gradients, variables) if grad is not None]
+    pairs = [
+        (grad, var) for grad, var in zip(gradients, variables, strict=False) if grad is not None
+    ]
     if not pairs:
         return
-    grads, vars_ = zip(*pairs)
+    grads, vars_ = zip(*pairs, strict=False)
     if clip_norm > 0:
         grads, _ = tf.clip_by_global_norm(list(grads), clip_norm)
-    optimizer.apply_gradients(zip(grads, vars_))
+    optimizer.apply_gradients(zip(grads, vars_, strict=False))
 
 
 def make_train_step(
@@ -237,7 +255,6 @@ def make_train_step(
             tf.TensorSpec((None, None, None, 3), tf.float32, name="input_image"),
             tf.TensorSpec((None, None, None, 3), tf.float32, name="target_image"),
         ],
-        name="pix2pix_train_step",
     )
     def train_step(input_image: tf.Tensor, target_image: tf.Tensor) -> dict[str, tf.Tensor]:
         loss_d = tf.constant(0.0, dtype=tf.float32)
@@ -256,7 +273,9 @@ def make_train_step(
                 )
 
             disc_grads = disc_tape.gradient(loss_d, discriminator.trainable_variables)
-            _apply_gradients(disc_optimizer, disc_grads, discriminator.trainable_variables, clip_norm)
+            _apply_gradients(
+                disc_optimizer, disc_grads, discriminator.trainable_variables, clip_norm
+            )
 
         # 2) GENERADOR: D se evalúa con training=False y no se aplican sus gradientes.
         with tf.GradientTape() as gen_tape:
@@ -294,7 +313,6 @@ def make_eval_step(generator: tf.keras.Model) -> Callable[[tf.Tensor, tf.Tensor]
             tf.TensorSpec((None, None, None, 3), tf.float32, name="input_image"),
             tf.TensorSpec((None, None, None, 3), tf.float32, name="target_image"),
         ],
-        name="pix2pix_eval_step",
     )
     def eval_step(input_image: tf.Tensor, target_image: tf.Tensor) -> tf.Tensor:
         fake = generator(input_image, training=False)
@@ -354,7 +372,7 @@ def _initialize_variables(
     discriminator([dummy, dummy], training=False)
     for model, optimizer in ((generator, gen_optimizer), (discriminator, disc_optimizer)):
         zero_grads = [tf.zeros_like(variable) for variable in model.trainable_variables]
-        optimizer.apply_gradients(zip(zero_grads, model.trainable_variables))
+        optimizer.apply_gradients(zip(zero_grads, model.trainable_variables, strict=False))
 
 
 def save_checkpoint(
@@ -373,10 +391,12 @@ def save_checkpoint(
         "seed": int(config.seed),
         "checkpoint": Path(path).name,
         "config_sha256": _config_hash(config),
-        "saved_at": datetime.now(timezone.utc).isoformat(),
+        "saved_at": datetime.now(UTC).isoformat(),
     }
     _atomic_write_text(directory / "config.yaml", config.source.read_text(encoding="utf-8"))
-    _atomic_write_text(directory / "metadata.json", json.dumps(metadata, indent=2, ensure_ascii=False))
+    _atomic_write_text(
+        directory / "metadata.json", json.dumps(metadata, indent=2, ensure_ascii=False)
+    )
     return path
 
 
@@ -401,7 +421,9 @@ def restore_checkpoint(
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         start_epoch = int(metadata.get("epoch", -1)) + 1
         if metadata.get("config_sha256") not in (None, _config_hash(config)):
-            print("[resume] AVISO: el YAML cambió desde el checkpoint; se reanuda con la config actual.")
+            print(
+                "[resume] AVISO: el YAML cambió desde el checkpoint; se reanuda con la config actual."
+            )
     print(f"[resume] Estado restaurado desde {path}; continuando en época {start_epoch}.")
     return max(start_epoch, 0)
 
@@ -420,7 +442,9 @@ def _write_metrics_rows(path: Path, rows: list[dict[str, Any]], *, append: bool)
 # ---------------------------------------------------------------------------
 # Bucle principal
 # ---------------------------------------------------------------------------
-def _mean_metrics(step_fn: Callable[..., Any], dataset: tf.data.Dataset, max_steps: int | None) -> dict[str, float]:
+def _mean_metrics(
+    step_fn: Callable[..., Any], dataset: tf.data.Dataset, max_steps: int | None
+) -> dict[str, float]:
     totals: dict[str, float] = {}
     seen = 0
     for input_image, target_image in dataset:
@@ -455,7 +479,12 @@ def train(
         tf.keras.mixed_precision.set_global_policy("mixed_float16")
         print("[train] Mixed precision activada (pérdidas en float32).")
 
-    if generator is None or discriminator is None or generator_loss_fn is None or discriminator_loss_fn is None:
+    if (
+        generator is None
+        or discriminator is None
+        or generator_loss_fn is None
+        or discriminator_loss_fn is None
+    ):
         resolved = resolve_components(config)
         generator = generator or resolved[0]
         discriminator = discriminator or resolved[1]
@@ -463,10 +492,14 @@ def train(
         discriminator_loss_fn = discriminator_loss_fn or resolved[3]
 
     gen_optimizer = tf.keras.optimizers.Adam(
-        learning_rate=config.train["lr_g"], beta_1=config.train["beta_1"], beta_2=config.train["beta_2"]
+        learning_rate=config.train["lr_g"],
+        beta_1=config.train["beta_1"],
+        beta_2=config.train["beta_2"],
     )
     disc_optimizer = tf.keras.optimizers.Adam(
-        learning_rate=config.train["lr_d"], beta_1=config.train["beta_1"], beta_2=config.train["beta_2"]
+        learning_rate=config.train["lr_d"],
+        beta_1=config.train["beta_1"],
+        beta_2=config.train["beta_2"],
     )
 
     train_ds = make_tf_dataset(
@@ -482,7 +515,9 @@ def train(
         generator, discriminator, gen_optimizer, disc_optimizer, config.image_size
     )
 
-    checkpoint = build_checkpoint(generator, discriminator, gen_optimizer, disc_optimizer, config.seed)
+    checkpoint = build_checkpoint(
+        generator, discriminator, gen_optimizer, disc_optimizer, config.seed
+    )
     manager = tf.train.CheckpointManager(
         checkpoint, str(config.checkpoint_dir), max_to_keep=int(config.train.get("max_to_keep", 3))
     )
@@ -536,8 +571,10 @@ def train(
                 val_l1=val_l1,
             )
 
-            if config.output.get("save_samples", True) and sample_batch is not None and (
-                epoch % sample_interval == 0 or epoch == int(config.train["epochs"]) - 1
+            if (
+                config.output.get("save_samples", True)
+                and sample_batch is not None
+                and (epoch % sample_interval == 0 or epoch == int(config.train["epochs"]) - 1)
             ):
                 sample_input, sample_target = sample_batch
                 sample_pred = generator(sample_input, training=False)
@@ -560,7 +597,9 @@ def train(
                 },
                 {"epoch": epoch, "split": "val", "loss_g": "", "loss_d": "", "l1": val_l1},
             ]
-            _write_metrics_rows(config.metrics_path, rows, append=resume or bool(resume_from) or epoch > start_epoch)
+            _write_metrics_rows(
+                config.metrics_path, rows, append=resume or bool(resume_from) or epoch > start_epoch
+            )
 
             if epoch % checkpoint_interval == 0 or epoch == int(config.train["epochs"]) - 1:
                 save_checkpoint(manager, checkpoint, config, epoch)
@@ -591,7 +630,9 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--config", default="configs/base.yaml", help="YAML de configuración.")
     parser.add_argument("--resume", action="store_true", help="Reanuda desde el último checkpoint.")
     parser.add_argument("--resume-from", default=None, help="Ruta explícita de checkpoint.")
-    parser.add_argument("--max-steps", type=int, default=None, help="Limitación de pasos (smoke/CI).")
+    parser.add_argument(
+        "--max-steps", type=int, default=None, help="Limitación de pasos (smoke/CI)."
+    )
     args = parser.parse_args(argv)
 
     train(

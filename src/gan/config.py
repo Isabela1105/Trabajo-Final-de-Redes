@@ -9,6 +9,7 @@ Referencia: docs/PLAN_COMMITS.md (PR-D1/D2) y configs/base.yaml.
 from __future__ import annotations
 
 import random
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -129,10 +130,8 @@ def set_seed(seed: int) -> None:
     np.random.seed(seed)
     tf.random.set_seed(seed)
     # En CPU las operaciones deterministas evitan diferencias entre reanudaciones.
-    try:
+    with suppress(AttributeError, RuntimeError):
         tf.config.experimental.enable_op_determinism()
-    except (AttributeError, RuntimeError):
-        pass
 
 
 def load_config(path: str | Path, *, fixed_seed: bool = True) -> Config:

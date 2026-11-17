@@ -30,7 +30,7 @@ def _to_uint8(images: tf.Tensor) -> tf.Tensor:
     return tf.image.convert_image_dtype(denormalize(images), tf.uint8)
 
 
-def _atomic_savefig(fig: "plt.Figure", path: Path) -> None:
+def _atomic_savefig(fig: plt.Figure, path: Path) -> None:
     """Guarda la figura en un temporal y la renombra: evita PNGs corruptos si Colab se cae."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -59,11 +59,17 @@ def save_sample_grid(
     if n <= 0:
         raise ValueError("El batch de muestras está vacío.")
 
-    columns = [denormalize(input_batch)[:n], denormalize(target_batch)[:n], denormalize(pred_batch)[:n]]
+    columns = [
+        denormalize(input_batch)[:n],
+        denormalize(target_batch)[:n],
+        denormalize(pred_batch)[:n],
+    ]
     fig, axes = plt.subplots(nrows=n, ncols=3, figsize=(9, 3 * n), squeeze=False)
 
     for row in range(n):
-        for col, (title, images) in enumerate(zip(("input", "target", "predicción"), columns)):
+        for col, (title, images) in enumerate(
+            zip(("input", "target", "predicción"), columns, strict=False)
+        ):
             ax = axes[row][col]
             ax.imshow(images[row].numpy())
             ax.axis("off")
@@ -101,8 +107,12 @@ class TensorBoardLogger:
     ) -> None:
         """Registra las tres imágenes por muestra para compararlas en TensorBoard."""
         with self._writer.as_default():
-            tf.summary.image("input", _to_uint8(input_batch), step=int(step), max_outputs=max_outputs)
-            tf.summary.image("target", _to_uint8(target_batch), step=int(step), max_outputs=max_outputs)
+            tf.summary.image(
+                "input", _to_uint8(input_batch), step=int(step), max_outputs=max_outputs
+            )
+            tf.summary.image(
+                "target", _to_uint8(target_batch), step=int(step), max_outputs=max_outputs
+            )
             tf.summary.image(
                 "prediction", _to_uint8(pred_batch), step=int(step), max_outputs=max_outputs
             )
