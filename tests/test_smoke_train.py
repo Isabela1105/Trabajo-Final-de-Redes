@@ -9,6 +9,7 @@ Referencia: docs/PLAN_COMMITS.md (PR-D3) y .github/workflows/ci.yml.
 from __future__ import annotations
 
 import csv
+import json
 from pathlib import Path
 
 import numpy as np
@@ -122,6 +123,32 @@ def test_smoke_train_resume_continues_from_last_checkpoint(smoke_config: Config)
     with smoke_config.metrics_path.open(newline="", encoding="utf-8") as handle:
         epochs = {int(row["epoch"]) for row in csv.DictReader(handle)}
     assert epochs == {0, 1, 2}, f"Épocas esperadas {{0,1,2}}, se obtuvieron {sorted(epochs)}."
+    with (smoke_config.checkpoint_dir / "metadata.json").open(encoding="utf-8") as handle:
+        metadata = json.load(handle)
+    assert metadata["epoch"] == 2
+    assert "best_val" in metadata and "waited" in metadata
+
+
+def test_resume_does_not_duplicate_metrics_rows(smoke_config: Config) -> None:
+    """Reanudar dos veces desde el mismo checkpoint no debe duplicar filas del CSV."""
+    kwargs = {
+        "generator": build_smoke_generator(image_size=smoke_config.image_size),
+        "discriminator": build_smoke_discriminator(),
+        "generator_loss_fn": smoke_generator_loss,
+        "discriminator_loss_fn": smoke_discriminator_loss,
+        "max_steps": 1,
+    }
+    smoke_config.train["epochs"] = 2
+    train(smoke_config, **kwargs)
+    # Reanudar desde el último checkpoint (época 1) sin avanzar más épocas.
+    kwargs["resume_from"] = str(next(smoke_config.checkpoint_dir.glob("ckpt-1*")))
+    smoke_config.train["epochs"] = 2
+    train(smoke_config, **kwargs)
+
+    with smoke_config.metrics_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 4, f"El CSV tiene filas duplicadas: {len(rows)}."
+    assert len({(row["epoch"], row["split"]) for row in rows}) == 4
 
 
 def test_early_stopping_when_val_l1_plateaus(

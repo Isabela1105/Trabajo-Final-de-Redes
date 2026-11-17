@@ -460,7 +460,11 @@ def build_checkpoint(
     disc_optimizer: tf.keras.optimizers.Optimizer,
     seed: int,
 ) -> tf.train.Checkpoint:
-    """Checkpoint con G, D, ambos optimizadores, época y semilla."""
+    """Checkpoint con G, D, optimizadores y todo el estado de la corrida.
+
+    Además de época y semilla se guarda el estado de early stopping (`best_val` y `waited`)
+    para que un `--resume` en Colab no reinicie la paciencia desde cero.
+    """
     return tf.train.Checkpoint(
         generator=generator,
         discriminator=discriminator,
@@ -468,6 +472,8 @@ def build_checkpoint(
         discriminator_optimizer=disc_optimizer,
         epoch=tf.Variable(0, dtype=tf.int64, name="epoch"),
         seed=tf.Variable(int(seed), dtype=tf.int64, name="seed"),
+        best_val=tf.Variable(float("inf"), dtype=tf.float32, name="best_val"),
+        waited=tf.Variable(0, dtype=tf.int64, name="waited"),
     )
 
 
@@ -492,19 +498,35 @@ def save_checkpoint(
     checkpoint: tf.train.Checkpoint,
     config: Config,
     epoch: int,
+    *,
+    best_val: float = float("inf"),
+    waited: int = 0,
 ) -> str:
-    """Guarda G/D/optimizadores y escribe config.yaml + metadata.json de forma atómica."""
+    """Guarda G/D/optimizadores y escribe config.yaml + metadata.json de forma atómica.
+
+    El checkpoint se considera válido solo si TensorFlow escribió el índice y además pudimos
+    escribir el metadata; así un corte de energía en Colab nunca deja un checkpoint "a medias"
+    que `restore_checkpoint` pueda confundir con uno bueno.
+    """
     checkpoint.epoch.assign(int(epoch))
     checkpoint.seed.assign(int(config.seed))
+    checkpoint.best_val.assign(float(best_val))
+    checkpoint.waited.assign(int(waited))
     path = manager.save(checkpoint_number=int(epoch))
+    if not path or not Path(f"{path}.index").exists():
+        raise RuntimeError(f"TensorFlow no escribió un checkpoint válido en {path!r}.")
+
     directory = Path(path).parent
     metadata = {
         "epoch": int(epoch),
         "seed": int(config.seed),
         "checkpoint": Path(path).name,
         "config_sha256": _config_hash(config),
+        "best_val": float(best_val),
+        "waited": int(waited),
         "saved_at": datetime.now(UTC).isoformat(),
     }
+    # Volcar config/metadata; si algo falla, el checkpoint queda marcado como incompleto.
     _atomic_write_text(directory / "config.yaml", config.source.read_text(encoding="utf-8"))
     _atomic_write_text(
         directory / "metadata.json", json.dumps(metadata, indent=2, ensure_ascii=False)
@@ -517,38 +539,66 @@ def restore_checkpoint(
     checkpoint: tf.train.Checkpoint,
     config: Config,
     resume_from: str | None = None,
-) -> int:
-    """Restaura el estado y devuelve la época desde la que se debe continuar."""
+) -> tuple[int, float, int]:
+    """Restaura el estado y devuelve `(época, best_val, waited)`.
+
+    Un checkpoint solo es reanudable si tiene su archivo `.index` y un `metadata.json` legible.
+    Si falta alguno, se sigue desde cero en vez de arriesgarse a restaurar un estado corrupto.
+    """
     path = resume_from or manager.latest_checkpoint
     if not path:
-        return 0
+        return 0, float("inf"), 0
+
+    path = str(path)
+    if not Path(f"{path}.index").exists():
+        print(f"[resume] AVISO: falta el índice de {path}; se ignora este checkpoint.")
+        return 0, float("inf"), 0
 
     status = checkpoint.restore(path)
     status.expect_partial()  # los slots del optimizador pueden no existir aún en el smoke
 
     directory = Path(path).parent
     metadata_path = directory / "metadata.json"
-    start_epoch = 0
-    if metadata_path.exists():
+    if not metadata_path.exists():
+        print("[resume] AVISO: falta metadata.json; se ignora el checkpoint.")
+        return 0, float("inf"), 0
+    try:
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-        start_epoch = int(metadata.get("epoch", -1)) + 1
-        if metadata.get("config_sha256") not in (None, _config_hash(config)):
-            print(
-                "[resume] AVISO: el YAML cambió desde el checkpoint; se reanuda con la config actual."
-            )
+    except (OSError, ValueError) as exc:
+        print(f"[resume] AVISO: metadata.json ilegible ({exc}); se ignora el checkpoint.")
+        return 0, float("inf"), 0
+
+    start_epoch = int(metadata.get("epoch", -1)) + 1
+    best_val = float(metadata.get("best_val", float("inf")))
+    waited = int(metadata.get("waited", 0))
+    saved_hash = metadata.get("config_sha256")
+    if saved_hash not in (None, _config_hash(config)):
+        print(
+            "[resume] AVISO: el YAML cambió desde el checkpoint; se reanuda con la config actual."
+        )
     print(f"[resume] Estado restaurado desde {path}; continuando en época {start_epoch}.")
-    return max(start_epoch, 0)
+    return max(start_epoch, 0), best_val, waited
 
 
 def _write_metrics_rows(path: Path, rows: list[dict[str, Any]], *, append: bool) -> None:
-    """Escribe filas de `metrics.csv` (una por época y split)."""
+    """Escribe filas de `metrics.csv`, evitando duplicados al reanudar.
+
+    Si el CSV ya contiene una fila para `(epoch, split)`, se reemplaza en vez de añadirse.
+    Así un `--resume` interrumpido a mitad de época no deja dos filas compitiendo.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    mode = "a" if append and path.exists() else "w"
-    with path.open(mode, newline="", encoding="utf-8") as handle:
+    existing: list[dict[str, Any]] = []
+    if append and path.exists():
+        with path.open(newline="", encoding="utf-8") as handle:
+            existing = list(csv.DictReader(handle))
+    new_keys = {(str(row["epoch"]), str(row["split"])) for row in rows}
+    merged = [row for row in existing if (row.get("epoch"), row.get("split")) not in new_keys]
+    merged.extend(rows)
+
+    with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=METRICS_FIELDS)
-        if mode == "w":
-            writer.writeheader()
-        writer.writerows(rows)
+        writer.writeheader()
+        writer.writerows(merged)
 
 
 # ---------------------------------------------------------------------------
@@ -629,9 +679,9 @@ def train(
         checkpoint, str(config.checkpoint_dir), max_to_keep=int(config.train.get("max_to_keep", 3))
     )
 
-    start_epoch = 0
+    start_epoch, best_val, waited = 0, float("inf"), 0
     if resume or resume_from:
-        start_epoch = restore_checkpoint(manager, checkpoint, config, resume_from)
+        start_epoch, best_val, waited = restore_checkpoint(manager, checkpoint, config, resume_from)
 
     config.output_dir.mkdir(parents=True, exist_ok=True)
     _atomic_write_text(config.output_dir / "config.yaml", config.source.read_text(encoding="utf-8"))
@@ -661,8 +711,6 @@ def train(
     sample_interval = max(1, int(config.train.get("sample_interval", 1)))
     checkpoint_interval = max(1, int(config.train.get("checkpoint_interval", 1)))
     patience = int(config.train.get("early_stopping_patience", 0) or 0)
-    best_val = float("inf")
-    waited = 0
     steps_limit = max_steps if max_steps is not None else config.train.get("max_steps")
     steps_limit = int(steps_limit) if steps_limit is not None else None
 
@@ -728,7 +776,9 @@ def train(
             )
 
             if epoch % checkpoint_interval == 0 or epoch == int(config.train["epochs"]) - 1:
-                save_checkpoint(manager, checkpoint, config, epoch)
+                save_checkpoint(
+                    manager, checkpoint, config, epoch, best_val=best_val, waited=waited
+                )
 
             print(
                 f"época {epoch:03d} | D {train_metrics.get('loss_d', 0.0):.4f} "
