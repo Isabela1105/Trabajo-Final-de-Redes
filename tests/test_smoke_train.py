@@ -13,6 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import tensorflow as tf
 from PIL import Image
 
 from src.gan.config import Config, load_config
@@ -120,3 +121,28 @@ def test_smoke_train_resume_continues_from_last_checkpoint(smoke_config: Config)
     with smoke_config.metrics_path.open(newline="", encoding="utf-8") as handle:
         epochs = {int(row["epoch"]) for row in csv.DictReader(handle)}
     assert epochs == {0, 1, 2}, f"Épocas esperadas {{0,1,2}}, se obtuvieron {sorted(epochs)}."
+
+
+def test_early_stopping_when_val_l1_plateaus(
+    smoke_config: Config, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Con L1 de validación plana y paciencia 1, el bucle debe detenerse en la época 1."""
+    monkeypatch.setattr(
+        "src.gan.train.make_eval_step",
+        lambda generator: lambda input_image, target_image: tf.constant(0.5),
+    )
+    smoke_config.train["epochs"] = 5
+    smoke_config.train["early_stopping_patience"] = 1
+    smoke_config.train["max_steps"] = 1
+
+    train(
+        smoke_config,
+        generator=build_smoke_generator(image_size=smoke_config.image_size),
+        discriminator=build_smoke_discriminator(),
+        generator_loss_fn=smoke_generator_loss,
+        discriminator_loss_fn=smoke_discriminator_loss,
+    )
+
+    with smoke_config.metrics_path.open(newline="", encoding="utf-8") as handle:
+        epochs = {int(row["epoch"]) for row in csv.DictReader(handle)}
+    assert epochs == {0, 1}, f"Early stopping no se activó a tiempo: {sorted(epochs)}."
