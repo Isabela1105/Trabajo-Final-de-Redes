@@ -213,6 +213,30 @@ def resolve_components(config: Config) -> tuple[Any, Any, Callable[..., Any], Ca
 # ---------------------------------------------------------------------------
 # Datasets y paso de entrenamiento
 # ---------------------------------------------------------------------------
+def _validate_pair(input_image: tf.Tensor, target_image: tf.Tensor) -> TensorBatch:
+    """Verifica en grafo el contrato del dataset: float32, shape fija y rango [-1, 1].
+
+    Si Isabella cambia el contrato, el entrenamiento falla aquí con un mensaje claro
+    en vez de propagar NaNs silenciosos al generador.
+    """
+    tolerance = 1e-3
+    checks = []
+    for image, name in ((input_image, "input"), (target_image, "target")):
+        checks.extend(
+            [
+                tf.debugging.assert_equal(tf.shape(image)[-1], 3, message=f"{name}: canales != 3"),
+                tf.debugging.assert_greater_equal(
+                    tf.reduce_min(image), -1.0 - tolerance, message=f"{name}: valor < -1"
+                ),
+                tf.debugging.assert_less_equal(
+                    tf.reduce_max(image), 1.0 + tolerance, message=f"{name}: valor > 1"
+                ),
+            ]
+        )
+    with tf.control_dependencies(checks):
+        return tf.identity(input_image), tf.identity(target_image)
+
+
 def make_tf_dataset(
     split_dir: str | Path,
     image_size: int,
@@ -238,7 +262,7 @@ def make_tf_dataset(
         tf.TensorSpec((image_size, image_size, 3), tf.float32, name="input_image"),
         tf.TensorSpec((image_size, image_size, 3), tf.float32, name="target_image"),
     )
-    dataset = tf.data.Dataset.from_generator(pairs, output_signature=signature)
+    dataset = tf.data.Dataset.from_generator(pairs, output_signature=signature).map(_validate_pair)
     if shuffle:
         dataset = dataset.shuffle(
             buffer_size=max(8, batch_size * 4), seed=seed, reshuffle_each_iteration=True

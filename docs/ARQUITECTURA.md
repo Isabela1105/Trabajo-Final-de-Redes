@@ -94,12 +94,92 @@ $$
 
 ## 5. Entrenamiento
 
-- Dos optimizadores Adam (G y D), lr 2e-4, β1 0.5.
-- `train_step` con `tf.function`.
-- Checkpoints cada época; reanudación.
-- TensorBoard + CSV.
-- Mixed precision en GPU.
-- Early stopping por L1 de validación.
+Responsable: Cristian Muñoz (`@CristianMP355`). Implementación en `src/gan/train.py`,
+`src/gan/config.py` y `src/gan/utils/viz.py`.
+
+### 5.1 Adaptación del dataset
+
+El módulo de Isabella entrega un generador de pares numpy
+`build_dataset(split_dir, size) -> (input, target)` float32 `(256,256,3)` en `[-1,1]`.
+`make_tf_dataset` lo envuelve en `tf.data` con `from_generator` y una `output_signature`
+estática, de modo que `tf.function` no recompile por forma de batch. Antes de entrenar,
+`_validate_pair` verifica en grafo los 3 canales y el rango `[-1,1]` de ambos miembros del par.
+
+### 5.2 Orden estricto D → G
+
+`make_train_step` devuelve un `tf.function` con `input_signature` fija y captura los modelos y
+optimizadores como objetos Python (no como tensores), para evitar retracing:
+
+```text
+1) D primero, G congelado:
+   fake = G(x, training=False)                 # fuera del tape de G
+   d_real = D([x, y], training=True)
+   d_fake = D([x, stop_gradient(fake)], training=True)
+   L_D = 0.5 * (BCE(d_real, 1-s) + BCE(d_fake, 0))
+   grads_D -> clip -> opt_D.apply_gradients
+
+2) G después, D congelado:
+   fake = G(x, training=True)
+   d_fake = D([x, fake], training=False)       # D no actualiza ni sus stats
+   L_G = BCE(d_fake, 1) + λ · L1(fake, y)
+   grads_G -> clip -> opt_G.apply_gradients
+```
+
+Dos `GradientTape` independientes garantizan que los gradientes de cada red no se mezclen.
+A diferencia del esquema del tutorial, aquí D se actualiza **antes** y G ve al D ya actualizado.
+
+### 5.3 Optimizadores y estabilidad
+
+- Dos `Adam` separados: `lr_g = lr_d = 2e-4`, `beta_1 = 0.5`, `beta_2 = 0.999`.
+- `label_smoothing` opcional en los reales del discriminador.
+- Clip global de gradientes (`clip_norm = 1.0`) antes de `apply_gradients`.
+- Mixed precision `mixed_float16` **solo si hay GPU**; las pérdidas y el L1 se calculan
+  explícitamente en `float32` para evitar NaN.
+- Early stopping por L1 de validación (`early_stopping_patience = 15`).
+
+### 5.4 Checkpoints y reanudación
+
+`tf.train.CheckpointManager` guarda cada época (máx. 3):
+
+| Objeto | Propósito |
+|---|---|
+| `generator`, `discriminator` | arquitectura + pesos |
+| `generator_optimizer`, `discriminator_optimizer` | momentos e iteraciones de Adam |
+| `epoch`, `seed` | punto exacto de reanudación |
+
+Junto al checkpoint se escriben de forma atómica (temporal + `os.replace`) un `config.yaml`
+con el YAML usado y un `metadata.json` con época, semilla y `sha256` de la configuración.
+`--resume` restaura el último estado y continúa en `epoch + 1`; `--resume-from <ruta>`
+permite elegir un checkpoint explícito. Si el YAML cambió, se avisa pero se respeta la config
+actual. Las variables de modelos y optimizadores se crean con un paso ficticio antes de
+restaurar, para que no falten slots en el checkpoint.
+
+### 5.5 Evidencia
+
+- `logs/`: escalares `loss_g`, `loss_d`, `loss_adv`, `loss_l1`, `val_l1` + imágenes
+  `input | target | prediction` por época (TensorBoard).
+- `samples/epoch_XXXX.png`: grid matplotlib guardado atómicamente.
+- `metrics.csv`: una fila por época y split (`train` lleva las pérdidas; `val`, el L1).
+- El generador se reconstruye desde los parámetros del YAML + `build_generator`, sin
+  hardcodear arquitectura en el checkpoint.
+
+### 5.6 Hiperparámetros (configs/base.yaml)
+
+| Parámetro | Valor | Parámetro | Valor |
+|---|---|---|---|
+| `image_size` | 256 | `batch_size` | 2 (rango 1–4) |
+| `ngf` / `ndf` | 64 / 64 | `n_downsample` | 8 |
+| `epochs` | 100 | `seed` | 42 |
+| `lr_g` / `lr_d` | 2e-4 / 2e-4 | `beta_1` / `beta_2` | 0.5 / 0.999 |
+| `lambda_l1` | 100 | `label_smoothing` | 0.0 |
+| `clip_norm` | 1.0 | `mixed_precision` | true (solo GPU) |
+| `sample_interval` | 5 | `checkpoint_interval` | 1 |
+
+### 5.7 Ablación
+
+`train.use_gan: false` desactiva la actualización de D y el término adversarial: el
+generador queda como U-Net solo L1 (línea base). Es el único cambio necesario para la
+ablación; el resto del pipeline (métricas, muestras, checkpoints) es idéntico.
 
 ---
 
