@@ -19,8 +19,15 @@ model:
   n_downsample: 8
   dropout: 0.5
   norm: instance
+  # Builders reales: se importan por ruta, sin hardcodear arquitectura en train.py.
+  generator_builder: src.gan.models.generator:build_generator
+  discriminator_builder: src.gan.models.discriminator:build_discriminator
+  losses_module: src.gan.losses
 
 train:
+  # En producción NUNCA se usan los modelos mínimos de smoke.
+  allow_smoke_fallback: false
+  max_to_keep: 3
   epochs: 100
   lr_g: 0.0002
   lr_d: 0.0002
