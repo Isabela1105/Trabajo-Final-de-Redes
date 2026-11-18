@@ -53,9 +53,7 @@ def build_generator(image_size=256, ngf=64, niveles=None, norm="instance", dropo
     if not 1 <= niveles <= MAX_NIVELES:
         raise ValueError(f"niveles debe estar entre 1 y {MAX_NIVELES}, no {niveles}")
     if image_size % (2**niveles) != 0:
-        raise ValueError(
-            f"image_size={image_size} no es divisible por 2**{niveles}={2**niveles}"
-        )
+        raise ValueError(f"image_size={image_size} no es divisible por 2**{niveles}={2**niveles}")
     if norm not in NORMALIZACIONES:
         raise ValueError(f"norm debe ser uno de {NORMALIZACIONES}, no {norm!r}")
 
