@@ -9,8 +9,8 @@
 | Campo | Valor |
 |---|---|
 | Nombre | Fotos UAO — Restauración |
-| Versión | 1.0 (v1; las cifras finales se congelan en el PR de cierre) |
-| Fecha | 2026-11-11 |
+| Versión | 1.0 (final) |
+| Fecha | 2026-11-16 |
 | Integrantes | Isabella Ortiz, Juan Pablo Dávila, Jeremy Caicedo, Cristian Muñoz, Juan Sebastian Castillo, Isabela |
 | Fuentes | 152 |
 | Variantes por fuente | 3 |
@@ -118,6 +118,24 @@ Limitaciones de este grupo: son pocas (12); se eligieron a mano, no al azar; vie
 fuente; y no se puede garantizar que ninguna haya sido retocada o restaurada antes de llegar a
 Pinterest. Si el repositorio se hace público, hay que cambiarlas por fotos de dominio público
 (por ejemplo, de la Library of Congress).
+
+## Casos borde cubiertos
+
+Los tests (`tests/`) comprueban estos casos:
+
+- Fotos "acostadas" (rotación EXIF) y con transparencia (alfa, que se pone sobre fondo blanco).
+- Gris de 16 o 32 bits: se escala a 8 bits (antes salía casi todo blanco).
+- Formas extremas (10000×100, 100×10000, 1×1): siempre salen en 256×256, sin deformar.
+- Muy pocas fuentes (0 a 3): el split no pierde ni repite ninguna.
+- El validador detecta fuga entre splits, archivo corrupto, par incompleto (falta el input o el
+  target), tamaño incorrecto, imagen que no es RGB, archivo fuera del manifiesto, manifiesto
+  vacío o sin columnas, y split desconocido.
+- La misma semilla da el mismo manifiesto y las mismas imágenes (comparadas por hash); otra
+  semilla da un resultado distinto.
+- Ningún archivo versionado pesa más de 5 MB.
+
+Cobertura de los tests sobre `src/gan/data` y `scripts/`: se mide con
+`pytest --cov=src/gan/data --cov=scripts --cov-report=term-missing` y supera el 95 %.
 
 ## Limitaciones
 

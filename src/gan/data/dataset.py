@@ -24,6 +24,16 @@ def list_sources(raw_dir: str | Path) -> list[Path]:
     return sorted(files)
 
 
+def _a_ocho_bits(img: Image.Image) -> Image.Image:
+    """Pasa una imagen gris de 16 o 32 bits a 8 bits (si no, Pillow la recorta a blanco)."""
+    arr = np.asarray(img, dtype=np.float64)
+    if img.mode.startswith("I;16") or arr.max() > 255:
+        escala = 65535.0
+    else:
+        escala = 255.0
+    return Image.fromarray(np.clip(arr / escala * 255.0, 0, 255).astype(np.uint8))
+
+
 def to_rgb(img: Image.Image) -> Image.Image:
     """Convierte cualquier imagen a RGB de forma segura.
 
@@ -31,6 +41,8 @@ def to_rgb(img: Image.Image) -> Image.Image:
     - Si tiene transparencia (alfa), la pone sobre fondo BLANCO en vez de negro.
     """
     img = ImageOps.exif_transpose(img)
+    if img.mode in ("I", "I;16", "I;16L", "I;16B"):
+        img = _a_ocho_bits(img)
     tiene_alfa = img.mode in ("RGBA", "LA", "PA") or (
         img.mode == "P" and "transparency" in img.info
     )
