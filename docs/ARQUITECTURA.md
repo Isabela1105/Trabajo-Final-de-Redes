@@ -99,11 +99,16 @@ Responsable: Cristian Muñoz (`@CristianMP355`). Implementación en `src/gan/tra
 
 ### 5.1 Adaptación del dataset
 
-El módulo de Isabella entrega un generador de pares numpy
-`build_dataset(split_dir, size) -> (input, target)` float32 `(256,256,3)` en `[-1,1]`.
-`make_tf_dataset` lo envuelve en `tf.data` con `from_generator` y una `output_signature`
-estática, de modo que `tf.function` no recompile por forma de batch. Antes de entrenar,
-`_validate_pair` verifica en grafo los 3 canales y el rango `[-1,1]` de ambos miembros del par.
+El módulo de Isabella ya entrega el cargador real
+`make_dataset(split_dir, batch_size, shuffle, seed, size, num_parallel_calls) -> tf.data.Dataset`,
+que lee `split/input/*.png` y `split/target/*.png` y devuelve pares `(input, target)` float32
+`(B,256,256,3)` en `[-1,1]` (normalización `x / 127.5 - 1`, con `tf.ensure_shape` del tamaño).
+`_make_split_dataset` solo traduce las claves de `configs/base.yaml` (`data.image_size`,
+`data.batch_size`, `data.num_parallel_calls`, `seed`) a esa firma; no se reimplementa ni se
+modifica el módulo ajeno. La forma estática del batch evita retracing dentro de `tf.function`
+y `_validate_pair` sigue verificando en grafo los 3 canales y el rango `[-1,1]` de cada par.
+`make_tf_dataset` (envolvente sobre el generador numpy `build_dataset`) se conserva solo como
+fallback legado para scripts antiguos; el bucle ya no lo usa.
 
 ### 5.2 Orden estricto D → G
 
@@ -131,7 +136,10 @@ A diferencia del esquema del tutorial, aquí D se actualiza **antes** y G ve al 
 ### 5.3 Optimizadores y estabilidad
 
 - Dos `Adam` separados: `lr_g = lr_d = 2e-4`, `beta_1 = 0.5`, `beta_2 = 0.999`.
-- `label_smoothing` opcional en los reales del discriminador.
+- `label_smoothing`: `_call_discriminator_loss` lo pasa solo si la pérdida lo acepta. La pérdida
+  real de Jeremy tiene firma `discriminator_loss(real_logits, fake_logits)` (sin smoothing), así
+  que con los módulos reales el valor efectivo es 0.0; se avisa por pantalla si se pide otro
+  valor. La adaptación vive en `train.py`, sin tocar `src/gan/losses.py`.
 - Clip global de gradientes (`clip_norm = 1.0`) antes de `apply_gradients`.
 - Mixed precision `mixed_float16` **solo si hay GPU**; las pérdidas y el L1 se calculan
   explícitamente en `float32` para evitar NaN.
