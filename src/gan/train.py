@@ -119,11 +119,19 @@ def _import_object(spec: str) -> Any:
 
 
 def _call_builder(builder: Callable[..., Any], config: Config) -> Any:
-    """Pasa al builder solo los argumentos que acepta, sin hardcodear su firma."""
+    """Pasa al builder solo los argumentos que acepta, sin hardcodear su firma.
+
+    El YAML usa `model.n_downsample` (nombre del plan de commits), pero el builder real del
+    generador recibe ese mismo concepto como `niveles`. Traducimos aquí el alias para respetar
+    la firma de Juan Pablo sin tocar su archivo; los builders que no usan el parámetro lo
+    ignoran igual que antes.
+    """
     candidates: dict[str, Any] = {
         "image_size": config.image_size,
         **dict(config.model),
     }
+    if "niveles" in inspect.signature(builder).parameters:
+        candidates["niveles"] = candidates.get("n_downsample")
     signature = inspect.signature(builder)
     accepts_kwargs = any(
         p.kind is inspect.Parameter.VAR_KEYWORD for p in signature.parameters.values()
@@ -134,6 +142,31 @@ def _call_builder(builder: Callable[..., Any], config: Config) -> Any:
         else {k: v for k, v in candidates.items() if k in signature.parameters}
     )
     return builder(**kwargs)
+
+
+def _call_discriminator_loss(
+    loss_fn: Callable[..., Any],
+    real_logits: tf.Tensor,
+    fake_logits: tf.Tensor,
+    label_smoothing: float,
+) -> tf.Tensor:
+    """Adapta el etiquetado suave a la firma de la pérdida disponible.
+
+    La pérdida real de Jeremy es `discriminator_loss(real_logits, fake_logits)` y no expone
+    `label_smoothing`; la de smoke sí lo acepta. Como está prohibido modificar su módulo,
+    pasamos el argumento solo cuando la función lo declara. Con el valor por defecto (0.0)
+    el resultado es idéntico; si alguien pide smoothing con la pérdida real, avisamos en vez
+    de romper la llamada.
+    """
+    parameters = inspect.signature(loss_fn).parameters
+    if "label_smoothing" in parameters:
+        return loss_fn(real_logits, fake_logits, label_smoothing)
+    if label_smoothing:
+        print(
+            "[train] AVISO: discriminator_loss no acepta label_smoothing; "
+            "se ignora. Solicitar el cambio al responsable de src/gan/losses.py."
+        )
+    return loss_fn(real_logits, fake_logits)
 
 
 def resolve_components(config: Config) -> tuple[Any, Any, Callable[..., Any], Callable[..., Any]]:
@@ -268,8 +301,11 @@ def make_train_step(
                     [input_image, tf.stop_gradient(fake_for_d)], training=True
                 )
                 # La pérdida siempre en float32, aunque el policy sea mixed_float16.
-                loss_d = discriminator_loss_fn(
-                    tf.cast(disc_real, tf.float32), tf.cast(disc_fake, tf.float32), label_smoothing
+                loss_d = _call_discriminator_loss(
+                    discriminator_loss_fn,
+                    tf.cast(disc_real, tf.float32),
+                    tf.cast(disc_fake, tf.float32),
+                    label_smoothing,
                 )
 
             disc_grads = disc_tape.gradient(loss_d, discriminator.trainable_variables)

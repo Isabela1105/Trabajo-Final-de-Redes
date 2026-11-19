@@ -1,6 +1,6 @@
 # Configuración mínima para tests y CI.
 # Debe correr en CPU en menos de ~2 minutos.
-# Usa la muestra sintética generada por scripts/make_synthetic_sample.py.
+# tests/test_smoke_train.py crea los pares sintéticos en tmp_path, sin scripts externos.
 
 seed: 42
 
