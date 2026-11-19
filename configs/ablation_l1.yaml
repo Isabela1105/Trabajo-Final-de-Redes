@@ -17,8 +17,9 @@ model:
   n_downsample: 4
   dropout: 0.5
   norm: instance
-  generator_builder: src.gan.train:build_smoke_generator
-  discriminator_builder: src.gan.train:build_smoke_discriminator
+  # Misma U-Net real que Pix2Pix; solo cambia use_gan y lambda_l1.
+  generator_builder: src.gan.models.generator:build_generator
+  discriminator_builder: src.gan.models.discriminator:build_discriminator
   losses_module: src.gan.losses
 
 train:

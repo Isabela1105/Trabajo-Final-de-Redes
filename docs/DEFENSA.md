@@ -176,8 +176,10 @@ al docente y revela huecos de comprensión.
 
 ### Bloque de entrenamiento (guion del Rol D, ~90 s)
 
-> "El bucle vive en `src/gan/train.py`. Primero adaptamos el generador de pares de Isabella a
-> `tf.data` con una firma fija y validamos en grafo que cada imagen esté en [-1,1]. En cada paso
+> "El bucle vive en `src/gan/train.py`. Usamos el `make_dataset` de Isabella ya mergeado en
+> `main`, con `tf.ensure_shape` y una firma fija, y validamos en grafo que cada imagen esté en
+> [-1,1]. Los builders reales de Juan Pablo y Jeremy se importan por ruta desde el YAML y sus
+> pérdidas se adaptan aquí a la firma del bucle sin modificar sus archivos. En cada paso
 > actualizamos **primero el discriminador**: congelamos G evaluándolo con `training=False`,
 > pasamos su salida con `stop_gradient` a D y aplicamos su Adam. **Después actualizamos G** con
 > D en `training=False`, para que no se mueva ni cambie sus estadísticas; el gradiente de la
@@ -197,8 +199,10 @@ Preguntas cruzadas que pueden caer en este bloque:
 - **¿Por qué la pérdida en float32 si el modelo va en float16?** BCE con logits extremos y L1
   pueden desbordarse en fp16; calcular la pérdida en fp32 mantiene la estabilidad sin perder
   la velocidad de la convolución en fp16.
-- **¿Qué pasa si el discriminador domina?** Se baja `lr_d`, se sube `label_smoothing` o se
-  reduce su número de pasos; se detecta porque `loss_d → 0` mientras `loss_g` crece.
+- **¿Qué pasa si el discriminador domina?** Se baja `lr_d` o se reduce su número de pasos; se
+  detecta porque `loss_d → 0` mientras `loss_g` crece. El etiquetado suave no está disponible
+  en la `discriminator_loss` real (no expone ese parámetro): `_call_discriminator_loss` lo
+  ignora con un aviso y habría que pedirlo en `src/gan/losses.py`, que no es nuestro archivo.
 - **¿Qué tienen que coincidir para reanudar?** La arquitectura (viene del YAML + `build_generator`)
   y la forma de los optimizadores; por eso se guarda `config.yaml` junto al checkpoint y se
   compara su hash.
