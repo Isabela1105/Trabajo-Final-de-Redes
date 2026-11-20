@@ -30,10 +30,7 @@ def adversarial_loss(logits, target_is_real):
     """
     # Una etiqueta por parche: un mapa de unos o de ceros con la forma de los
     # logits (tf.ones_like / tf.zeros_like copian la forma y el tipo).
-    if target_is_real:
-        etiquetas = tf.ones_like(logits)
-    else:
-        etiquetas = tf.zeros_like(logits)
+    etiquetas = tf.ones_like(logits) if target_is_real else tf.zeros_like(logits)
     return _bce(etiquetas, logits)
 
 
