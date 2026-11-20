@@ -1,6 +1,6 @@
 # Configuración mínima para tests y CI.
 # Debe correr en CPU en menos de ~2 minutos.
-# Usa la muestra sintética generada por scripts/make_synthetic_sample.py.
+# tests/test_smoke_train.py crea los pares sintéticos en tmp_path, sin scripts externos.
 
 seed: 42
 
@@ -18,8 +18,14 @@ model:
   n_downsample: 4
   dropout: 0.5
   norm: instance
+  # Hasta que se mergeen PR-B2/PR-C2 se usan los modelos mínimos de train.py.
+  generator_builder: src.gan.train:build_smoke_generator
+  discriminator_builder: src.gan.train:build_smoke_discriminator
+  losses_module: src.gan.losses
 
 train:
+  allow_smoke_fallback: true
+  max_to_keep: 1
   epochs: 1
   lr_g: 0.0002
   lr_d: 0.0002
