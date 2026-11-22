@@ -30,6 +30,7 @@ import tensorflow as tf
 
 from src.gan.config import Config, load_config
 from src.gan.data.dataset import build_dataset
+from src.gan.data.tf_dataset import make_dataset
 from src.gan.utils.viz import TensorBoardLogger, save_sample_grid
 
 DEFAULT_GENERATOR_BUILDER = "src.gan.models.generator:build_generator"
@@ -169,6 +170,11 @@ def _call_discriminator_loss(
     return loss_fn(real_logits, fake_logits)
 
 
+def _default_l1_loss(target: tf.Tensor, gen_output: tf.Tensor) -> tf.Tensor:
+    """L1 de reserva, usada solo para descomponer/reportar la pérdida total."""
+    return tf.reduce_mean(tf.abs(tf.cast(target, tf.float32) - tf.cast(gen_output, tf.float32)))
+
+
 def resolve_components(config: Config) -> tuple[Any, Any, Callable[..., Any], Callable[..., Any]]:
     """Devuelve (generator, discriminator, generator_loss, discriminator_loss).
 
@@ -213,6 +219,30 @@ def resolve_components(config: Config) -> tuple[Any, Any, Callable[..., Any], Ca
 # ---------------------------------------------------------------------------
 # Datasets y paso de entrenamiento
 # ---------------------------------------------------------------------------
+def _validate_pair(input_image: tf.Tensor, target_image: tf.Tensor) -> TensorBatch:
+    """Verifica en grafo el contrato del dataset: float32, shape fija y rango [-1, 1].
+
+    Si Isabella cambia el contrato, el entrenamiento falla aquí con un mensaje claro
+    en vez de propagar NaNs silenciosos al generador.
+    """
+    tolerance = 1e-3
+    checks = []
+    for image, name in ((input_image, "input"), (target_image, "target")):
+        checks.extend(
+            [
+                tf.debugging.assert_equal(tf.shape(image)[-1], 3, message=f"{name}: canales != 3"),
+                tf.debugging.assert_greater_equal(
+                    tf.reduce_min(image), -1.0 - tolerance, message=f"{name}: valor < -1"
+                ),
+                tf.debugging.assert_less_equal(
+                    tf.reduce_max(image), 1.0 + tolerance, message=f"{name}: valor > 1"
+                ),
+            ]
+        )
+    with tf.control_dependencies(checks):
+        return tf.identity(input_image), tf.identity(target_image)
+
+
 def make_tf_dataset(
     split_dir: str | Path,
     image_size: int,
@@ -221,10 +251,10 @@ def make_tf_dataset(
     shuffle: bool = False,
     seed: int = 42,
 ) -> tf.data.Dataset:
-    """Envuelve el `build_dataset` de Isabella en un `tf.data.Dataset` de forma fija.
+    """Envolvente legada sobre el generador numpy de Isabella, conservada como fallback.
 
-    No se modifica el módulo de datos: solo se itera su generador de pares numpy.
-    La firma de salida es estática para evitar retracing dentro de `tf.function`.
+    El bucle usa `make_dataset` (loader tf.data real de `src/gan/data/tf_dataset.py`); esta
+    función queda para scripts antiguos que aún no tienen esa ruta disponible.
     """
 
     def pairs() -> Any:
@@ -238,12 +268,29 @@ def make_tf_dataset(
         tf.TensorSpec((image_size, image_size, 3), tf.float32, name="input_image"),
         tf.TensorSpec((image_size, image_size, 3), tf.float32, name="target_image"),
     )
-    dataset = tf.data.Dataset.from_generator(pairs, output_signature=signature)
+    dataset = tf.data.Dataset.from_generator(pairs, output_signature=signature).map(_validate_pair)
     if shuffle:
         dataset = dataset.shuffle(
             buffer_size=max(8, batch_size * 4), seed=seed, reshuffle_each_iteration=True
         )
     return dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+
+
+def _make_split_dataset(config: Config, split_dir: str | Path, *, shuffle: bool) -> tf.data.Dataset:
+    """Crea un split con el cargador tf.data real subido por Isabella.
+
+    `make_dataset(split_dir, batch_size, shuffle, seed, size, num_parallel_calls)` ya garantiza
+    pares `(input, target)` float32 en [-1,1] con `tf.ensure_shape`, así que aquí solo pasamos
+    los valores del YAML sin reimplementar ni modificar su módulo.
+    """
+    return make_dataset(
+        split_dir,
+        batch_size=config.batch_size,
+        shuffle=shuffle,
+        seed=config.seed,
+        size=config.image_size,
+        num_parallel_calls=int(config.data.get("num_parallel_calls", tf.data.AUTOTUNE)),
+    )
 
 
 def _apply_gradients(
@@ -276,12 +323,19 @@ def make_train_step(
     label_smoothing: float = 0.0,
     clip_norm: float = 1.0,
     use_gan: bool = True,
+    l1_loss_fn: Callable[..., Any] | None = None,
 ) -> Callable[[tf.Tensor, tf.Tensor], dict[str, tf.Tensor]]:
     """Construye el `train_step` compilado con una firma de entrada fija.
 
     Orden estricto: (1) actualizar D con G congelado; (2) actualizar G con D congelado.
     La firma de entrada usa dimensiones `None` para no recompilar al cambiar batch/imagen.
+
+    `generator_loss_fn` puede devolver el escalar total (contrato real de `src/gan/losses.py`)
+    o la tupla `(total, adversarial, l1)` de los modelos mínimos de smoke. En el primer caso
+    descomponemos el total con `l1_loss_fn` solo para las métricas; el gradiente siempre viene
+    de la pérdida original, sin reimplementarla.
     """
+    calculate_l1 = l1_loss_fn or _default_l1_loss
 
     @tf.function(
         input_signature=[
@@ -321,12 +375,24 @@ def make_train_step(
                 adversarial_part = tf.cast(disc_fake_for_g, tf.float32)
             else:
                 adversarial_part = tf.zeros_like(tf.cast(gen_output, tf.float32))
-            gen_total, gen_adv, gen_l1 = generator_loss_fn(
-                adversarial_part,
-                tf.cast(gen_output, tf.float32),
-                tf.cast(target_image, tf.float32),
-                lambda_l1,
-            )
+            gen_f = tf.cast(gen_output, tf.float32)
+            target_f = tf.cast(target_image, tf.float32)
+            loss_result = generator_loss_fn(adversarial_part, gen_f, target_f, lambda_l1)
+            if isinstance(loss_result, tuple | list):
+                # Pérdida de los modelos mínimos: ya devuelve sus tres componentes.
+                gen_total, gen_adv, gen_l1 = loss_result[:3]
+            else:
+                # Pérdida real: devuelve solo el escalar total. La L1 se calcula para
+                # reportarla; la diferenciación sigue usando el escalar devuelto.
+                gen_total = loss_result
+                gen_l1 = calculate_l1(target_f, gen_f)
+                gen_adv = gen_total - lambda_l1 * gen_l1
+                if not use_gan:
+                    # Ablación pura: sin término adversarial (el bundle real siempre lo
+                    # incluye con logits falsos, pero ese término no aporta gradiente).
+                    gen_l1 = calculate_l1(target_f, gen_f)
+                    gen_total = lambda_l1 * gen_l1
+                    gen_adv = tf.zeros_like(gen_l1)
 
         gen_grads = gen_tape.gradient(gen_total, generator.trainable_variables)
         _apply_gradients(gen_optimizer, gen_grads, generator.trainable_variables, clip_norm)
@@ -538,14 +604,8 @@ def train(
         beta_2=config.train["beta_2"],
     )
 
-    train_ds = make_tf_dataset(
-        config.data["train_dir"],
-        config.image_size,
-        config.batch_size,
-        shuffle=True,
-        seed=config.seed,
-    )
-    val_ds = make_tf_dataset(config.data["val_dir"], config.image_size, config.batch_size)
+    train_ds = _make_split_dataset(config, config.data["train_dir"], shuffle=True)
+    val_ds = _make_split_dataset(config, config.data["val_dir"], shuffle=False)
 
     _initialize_variables(
         generator, discriminator, gen_optimizer, disc_optimizer, config.image_size
@@ -566,6 +626,11 @@ def train(
     _atomic_write_text(config.output_dir / "config.yaml", config.source.read_text(encoding="utf-8"))
 
     clip_norm = float(config.train["clip_norm"])
+    losses_module = config.model.get("losses_module", DEFAULT_LOSSES_MODULE)
+    try:
+        real_l1_loss = _import_object(f"{losses_module}:l1_loss")
+    except (ImportError, AttributeError, ValueError):
+        real_l1_loss = None  # las pérdidas smoke usan su propia descomposición
     train_step = make_train_step(
         generator,
         discriminator,
@@ -577,6 +642,7 @@ def train(
         label_smoothing=float(config.train.get("label_smoothing", 0.0)),
         clip_norm=clip_norm,
         use_gan=bool(config.train.get("use_gan", True)),
+        l1_loss_fn=real_l1_loss,
     )
     eval_step = make_eval_step(generator)
 

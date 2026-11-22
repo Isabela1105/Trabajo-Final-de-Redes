@@ -18,9 +18,10 @@ model:
   n_downsample: 4
   dropout: 0.5
   norm: instance
-  # Hasta que se mergeen PR-B2/PR-C2 se usan los modelos mínimos de train.py.
-  generator_builder: src.gan.train:build_smoke_generator
-  discriminator_builder: src.gan.train:build_smoke_discriminator
+  # Builders y pérdidas reales ya mergeados en main. Los tests inyectan modelos mínimos
+  # para que el smoke sea rápido; la CLI usa estos módulos reales.
+  generator_builder: src.gan.models.generator:build_generator
+  discriminator_builder: src.gan.models.discriminator:build_discriminator
   losses_module: src.gan.losses
 
 train:
