@@ -87,6 +87,25 @@ def test_real_modules_train_end_to_end(integration_config: Config) -> None:
     assert list(integration_config.log_dir.glob("events.out.tfevents.*"))
 
 
+def test_real_ablation_only_trains_generator(integration_config: Config) -> None:
+    """Con los módulos reales, `use_gan: false` no debe mover ni un peso de D."""
+    integration_config.train["use_gan"] = False
+    generator, discriminator, gen_loss_fn, disc_loss_fn = resolve_components(integration_config)
+    before_d = [variable.numpy().copy() for variable in discriminator.trainable_variables]
+
+    train(
+        integration_config,
+        generator=generator,
+        discriminator=discriminator,
+        generator_loss_fn=gen_loss_fn,
+        discriminator_loss_fn=disc_loss_fn,
+        max_steps=1,
+    )
+
+    after_d = [variable.numpy() for variable in discriminator.trainable_variables]
+    assert all(np.allclose(old, new) for old, new in zip(before_d, after_d, strict=True))
+
+
 def test_real_discriminator_loss_ignores_label_smoothing() -> None:
     """La pérdida real no acepta `label_smoothing`; el adaptador no debe romper la llamada."""
     logits = tf.zeros((2, 6, 6, 1), dtype=tf.float32)

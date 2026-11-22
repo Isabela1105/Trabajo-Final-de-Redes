@@ -174,6 +174,39 @@ al docente y revela huecos de comprensión.
     Sí: `configs/base.yaml`, semilla 42, tag `v1.0.0`, instrucciones en README y pesos
     descargables.
 
+### Bloque de entrenamiento (guion del Rol D, ~90 s)
+
+> "El bucle vive en `src/gan/train.py`. Usamos el `make_dataset` de Isabella ya mergeado en
+> `main`, con `tf.ensure_shape` y una firma fija, y validamos en grafo que cada imagen esté en
+> [-1,1]. Los builders reales de Juan Pablo y Jeremy se importan por ruta desde el YAML y sus
+> pérdidas se adaptan aquí a la firma del bucle sin modificar sus archivos. En cada paso
+> actualizamos **primero el discriminador**: congelamos G evaluándolo con `training=False`,
+> pasamos su salida con `stop_gradient` a D y aplicamos su Adam. **Después actualizamos G** con
+> D en `training=False`, para que no se mueva ni cambie sus estadísticas; el gradiente de la
+> pérdida adversarial llega a G a través de D. Usamos dos `GradientTape` y dos Adams con
+> lr 2e-4 y beta1 0.5, con clip global de 1.0. En GPU activamos `mixed_float16`, pero las
+> pérdidas y el L1 se calculan en float32 para que no aparezcan NaNs. Cada época escribimos
+> escalares e imágenes en TensorBoard, una fila por split en `metrics.csv` y un checkpoint con
+> G, D, ambos optimizadores, época y semilla; junto a él guardamos el YAML y su hash de forma
+> atómica. Si Colab se cae, `--resume` lee el `metadata.json` y sigue en la época siguiente.
+> Para demostrar que la GAN aporta algo corremos `configs/ablation_l1.yaml`, que es lo mismo
+> pero con `use_gan: false` (solo L1)."
+
+Preguntas cruzadas que pueden caer en este bloque:
+
+- **¿Por qué D primero y no los dos a la vez?** Para que G reciba una señal adversarial del D
+  ya actualizado y para que los gradientes de una red nunca modifiquen la otra.
+- **¿Por qué la pérdida en float32 si el modelo va en float16?** BCE con logits extremos y L1
+  pueden desbordarse en fp16; calcular la pérdida en fp32 mantiene la estabilidad sin perder
+  la velocidad de la convolución en fp16.
+- **¿Qué pasa si el discriminador domina?** Se baja `lr_d` o se reduce su número de pasos; se
+  detecta porque `loss_d → 0` mientras `loss_g` crece. El etiquetado suave no está disponible
+  en la `discriminator_loss` real (no expone ese parámetro): `_call_discriminator_loss` lo
+  ignora con un aviso y habría que pedirlo en `src/gan/losses.py`, que no es nuestro archivo.
+- **¿Qué tienen que coincidir para reanudar?** La arquitectura (viene del YAML + `build_generator`)
+  y la forma de los optimizadores; por eso se guarda `config.yaml` junto al checkpoint y se
+  compara su hash.
+
 ---
 
 ## 7. Hoja de trucos por integrante

@@ -37,7 +37,7 @@ DEFAULT_GENERATOR_BUILDER = "src.gan.models.generator:build_generator"
 DEFAULT_DISCRIMINATOR_BUILDER = "src.gan.models.discriminator:build_discriminator"
 DEFAULT_LOSSES_MODULE = "src.gan.losses"
 
-METRICS_FIELDS = ("epoch", "split", "loss_g", "loss_d", "l1")
+METRICS_FIELDS = ("epoch", "split", "loss_g", "loss_d", "l1", "psnr", "ssim")
 
 TensorBatch = tuple[tf.Tensor, tf.Tensor]
 
@@ -407,8 +407,13 @@ def make_train_step(
     return train_step
 
 
-def make_eval_step(generator: tf.keras.Model) -> Callable[[tf.Tensor, tf.Tensor], tf.Tensor]:
-    """Compila el cálculo de L1 de validación, sin gradientes."""
+def make_eval_step(
+    generator: tf.keras.Model,
+) -> Callable[[tf.Tensor, tf.Tensor], dict[str, tf.Tensor]]:
+    """Compila L1, PSNR y SSIM de validación, sin gradientes.
+
+    Las imágenes están en [-1, 1], por eso `max_val=2.0` en PSNR/SSIM.
+    """
 
     @tf.function(
         input_signature=[
@@ -416,9 +421,14 @@ def make_eval_step(generator: tf.keras.Model) -> Callable[[tf.Tensor, tf.Tensor]
             tf.TensorSpec((None, None, None, 3), tf.float32, name="target_image"),
         ],
     )
-    def eval_step(input_image: tf.Tensor, target_image: tf.Tensor) -> tf.Tensor:
-        fake = generator(input_image, training=False)
-        return tf.reduce_mean(tf.abs(tf.cast(fake, tf.float32) - tf.cast(target_image, tf.float32)))
+    def eval_step(input_image: tf.Tensor, target_image: tf.Tensor) -> dict[str, tf.Tensor]:
+        fake = tf.cast(generator(input_image, training=False), tf.float32)
+        target = tf.cast(target_image, tf.float32)
+        return {
+            "l1": tf.reduce_mean(tf.abs(fake - target)),
+            "psnr": tf.reduce_mean(tf.image.psnr(fake, target, max_val=2.0)),
+            "ssim": tf.reduce_mean(tf.image.ssim(fake, target, max_val=2.0)),
+        }
 
     return eval_step
 
@@ -553,7 +563,8 @@ def _mean_metrics(
         result = step_fn(input_image, target_image)
         values = result if isinstance(result, dict) else {"l1": result}
         for name, value in values.items():
-            totals[name] = totals.get(name, 0.0) + float(value)
+            # Las métricas pueden llegar como escalar o como vector (un valor por imagen).
+            totals[name] = totals.get(name, 0.0) + float(tf.reduce_mean(tf.cast(value, tf.float32)))
         seen += 1
         if max_steps is not None and seen >= max_steps:
             break
@@ -662,7 +673,8 @@ def train(
     try:
         for epoch in range(start_epoch, int(config.train["epochs"])):
             train_metrics = _mean_metrics(train_step, train_ds, steps_limit)
-            val_l1 = _mean_metrics(eval_step, val_ds, steps_limit)["l1"]
+            val_metrics = _mean_metrics(eval_step, val_ds, steps_limit)
+            val_l1 = val_metrics["l1"]
 
             logger.log_scalars(
                 epoch,
@@ -671,6 +683,8 @@ def train(
                 loss_adv=train_metrics.get("loss_adv", 0.0),
                 loss_l1=train_metrics.get("loss_l1", 0.0),
                 val_l1=val_l1,
+                val_psnr=val_metrics["psnr"],
+                val_ssim=val_metrics["ssim"],
             )
 
             if (
@@ -696,8 +710,18 @@ def train(
                     "loss_g": train_metrics.get("loss_g", ""),
                     "loss_d": train_metrics.get("loss_d", ""),
                     "l1": train_metrics.get("loss_l1", ""),
+                    "psnr": "",
+                    "ssim": "",
                 },
-                {"epoch": epoch, "split": "val", "loss_g": "", "loss_d": "", "l1": val_l1},
+                {
+                    "epoch": epoch,
+                    "split": "val",
+                    "loss_g": "",
+                    "loss_d": "",
+                    "l1": val_l1,
+                    "psnr": val_metrics["psnr"],
+                    "ssim": val_metrics["ssim"],
+                },
             ]
             _write_metrics_rows(
                 config.metrics_path, rows, append=resume or bool(resume_from) or epoch > start_epoch
