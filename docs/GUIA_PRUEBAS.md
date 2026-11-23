@@ -54,7 +54,8 @@ curl -F "file=@data/sample/val/input/sample_00.png" http://127.0.0.1:8000/api/re
 
 ## Nivel 3 — Con el modelo entrenado (Colab o PC)
 
-1. Descarga del Drive la carpeta `checkpoints/` de la corrida base
+1. Descarga `pix2pix_20ep.zip` del release `v1.0.0` y descomprímelo en la raíz del repo (queda
+   `outputs/base/checkpoints/`). Alternativa: la carpeta `checkpoints/` de la corrida base del Drive
    (`pix2pix_outputs/metricas_loss_existente/checkpoints` o
    `Redes-Pix2Pix/resultados_pix2pix/base/checkpoints`) y cópiala a `outputs/base/checkpoints/`.
    Debe contener `ckpt-N.index`, `ckpt-N.data-*`, `checkpoint`, `config.yaml` y `metadata.json`.

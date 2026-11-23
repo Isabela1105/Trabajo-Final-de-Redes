@@ -140,6 +140,11 @@ Peores casos (sin elegir a mano): [`docs/img/failures.png`](docs/img/failures.pn
 
 Demo principal: página propia servida por FastAPI, sin internet.
 
+**Pesos entrenados:** descargar `pix2pix_20ep.zip` (y opcionalmente `ablacion_solo_l1_20ep.zip`)
+del [release `v1.0.0`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/releases/tag/v1.0.0)
+y descomprimirlo en la raíz del repositorio: queda `outputs/base/checkpoints/` (y
+`outputs/ablation/checkpoints/`), que es lo que usan los comandos de abajo.
+
 ```bash
 python -m app.server --checkpoint outputs/base/checkpoints
 # abrir http://127.0.0.1:8000
