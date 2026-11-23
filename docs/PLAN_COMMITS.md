@@ -128,8 +128,14 @@ desconexión de Colab y produce checkpoints + logs + muestras.
 
 ## 7. Persona E — Evaluación, inferencia y demo
 
-**Archivos que posee:** `src/gan/evaluate.py`, `src/gan/infer.py`, `app/app.py`,
-`tests/test_metrics.py`, `tests/test_app.py`, `docs/img/` (resultados).
+**Archivos que posee:** `src/gan/metrics.py`, `src/gan/evaluate.py`, `src/gan/infer.py`,
+`app/server.py`, `web/` (HTML, CSS y JS), `app/gradio_app.py` (respaldo), `tests/test_metrics.py`,
+`tests/test_infer.py`, `tests/test_evaluate.py`, `tests/test_app.py`, `docs/img/` (resultados).
+
+> **Cambio de plan (decisión del equipo):** la demo principal pasó de Gradio a **FastAPI + `web/`**
+> para que el repositorio muestre código propio y la demo no dependa de una librería externa.
+> Gradio queda como respaldo en `app/gradio_app.py`. El despliegue en Hugging Face Spaces se
+> reemplazó por la ejecución local documentada (la defensa no debe depender de internet).
 **Respaldo:** Persona D.
 
 | PR | Días | Rama | Commits (mensaje exacto) | Archivos principales | Revisor |
@@ -137,12 +143,12 @@ desconexión de Colab y produce checkpoints + logs + muestras.
 | **PR-E1** | 1 | `docs/06-protocolo-eval` | `docs(eval): definir métricas y protocolo de evaluación` | `docs/ARQUITECTURA.md` | B |
 | **PR-E2** | 2–4 | `feat/16-metrics-inference` | `feat(eval): implementar PSNR, SSIM y L1`<br>`feat(infer): implementar inferencia sobre una imagen`<br>`test(eval): validar métricas con imágenes conocidas` | `src/gan/evaluate.py`, `src/gan/infer.py`, `tests/test_metrics.py` | C, D |
 | **PR-E3** | 5 | `docs/17-baselines` | `docs(eval): describir líneas base y tablas de resultados` | `docs/ARQUITECTURA.md` | F |
-| **PR-E4** | 8–11 | `feat/26-eval-app` | `feat(eval): evaluar test set y guardar CSV`<br>`feat(viz): generar grids input/target/predicción`<br>`feat(app): crear demo Gradio mínima`<br>`test(app): probar carga de modelo y predicción` | `src/gan/evaluate.py`, `src/gan/utils/viz.py`, `app/app.py`, `tests/test_app.py` | B, D, F |
-| **PR-E5** | 15–20 | `feat/33-results-app` | `feat(eval): agregar FID opcional`<br>`feat(app): agregar ejemplos y selector de imágenes`<br>`docs(eval): documentar resultados cuantitativos y cualitativos`<br>`docs(app): documentar despliegue en Hugging Face Spaces` | `src/gan/evaluate.py`, `app/app.py`, `docs/ARQUITECTURA.md`, `README.md` | A, C, F |
-| **PR-E6** | 22–24 | `fix/37-app-formats` | `fix(app): manejar imágenes grandes y formatos`<br>`docs(eval): congelar tablas y figuras finales` | `app/app.py`, `docs/ARQUITECTURA.md`, `docs/img/` | B |
+| **PR-E4** | 8–11 | `feat/26-eval-app` | `feat(eval): evaluar test set y guardar CSV`<br>`feat(viz): generar grids input/target/predicción`<br>`feat(app): crear demo web mínima con FastAPI`<br>`test(app): probar carga de modelo y predicción` | `src/gan/evaluate.py`, `src/gan/utils/viz.py`, `app/server.py`, `web/`, `tests/test_app.py` | B, D, F |
+| **PR-E5** | 15–20 | `feat/33-results-app` | `feat(eval): agregar FID opcional`<br>`feat(app): agregar ejemplos y selector de imágenes`<br>`docs(eval): documentar resultados cuantitativos y cualitativos`<br>`docs(app): documentar despliegue de la demo` | `src/gan/evaluate.py`, `app/server.py`, `web/`, `docs/ARQUITECTURA.md`, `README.md` | A, C, F |
+| **PR-E6** | 22–24 | `fix/37-app-formats` | `fix(app): manejar imágenes grandes y formatos`<br>`docs(eval): congelar tablas y figuras finales` | `src/gan/infer.py`, `app/server.py`, `docs/ARQUITECTURA.md`, `docs/img/` | B |
 
-**Entregable clave de E:** tabla PSNR/SSIM/L1 con baselines, grid de resultados y demo Gradio
-que cualquiera puede correr con un comando.
+**Entregable clave de E:** tabla PSNR/SSIM/L1 con baselines, grid de resultados y demo web
+(FastAPI + HTML/CSS/JS, Gradio como respaldo) que cualquiera puede correr con un comando.
 
 ---
 
