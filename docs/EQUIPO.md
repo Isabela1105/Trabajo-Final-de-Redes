@@ -9,11 +9,12 @@
 | 3 | Jeremy Santiago Caicedo Cabezas | `@JeremyCaicedo` | 2210721 | Discriminador y pérdidas | Juan Pablo |
 | 4 | Cristian Fabian Muñoz Piedrahita | `@CristianMP355` | 2230865 | Entrenamiento | Juan Sebastian |
 | 5 | Juan Sebastian Castillo Acevedo | `@Juansec01` | 2231921 | Evaluación y demo | Cristian |
-| 6 | Isabela | `@Isabela1105` | _(completar)_ | CI/CD, integración e informe | Isabella Ortiz |
+| 6 | Isabela Cabezas Obregón | `@Isabela1105` | 2226013 | CI/CD, integración e informe | Isabella Ortiz |
 
-> **Pendiente:** confirmar nombre completo y código de `@Isabela1105`. Si el rol de Isabela debe
-> ser otro, intercambiarlo antes de crear las ramas; el plan de commits es simétrico y se puede
-> reasignar sin romper dependencias.
+> **Rol asignado ≠ trabajo hecho.** El generador (área de Juan Pablo) lo implementó Jeremy
+> (#18), y el generador de datos sintéticos (área de Isabela, PR-F3) lo hizo Juan Sebastian.
+> La propiedad de la tabla de abajo es la del plan; quién hizo cada cosa está en
+> [`PARTICIPACION.md`](PARTICIPACION.md).
 
 ---
 
@@ -25,7 +26,7 @@
 | Generador | Juan Pablo | `src/gan/models/blocks.py`, `src/gan/models/generator.py`, `tests/test_models.py` (generador), `docs/ARQUITECTURA.md` (U-Net) |
 | Discriminador/pérdidas | Jeremy | `src/gan/models/discriminator.py`, `src/gan/losses.py`, `tests/test_losses.py`, `docs/ARQUITECTURA.md` (PatchGAN/pérdidas) |
 | Entrenamiento | Cristian | `src/gan/train.py`, `src/gan/config.py`, `configs/`, `src/gan/utils/viz.py`, `tests/test_smoke_train.py` |
-| Evaluación/demo | Juan Sebastian | `src/gan/evaluate.py`, `src/gan/infer.py`, `app/app.py`, `tests/test_metrics.py`, `tests/test_app.py`, `docs/img/` |
+| Evaluación/demo | Juan Sebastian | `src/gan/metrics.py`, `src/gan/evaluate.py`, `src/gan/infer.py`, `app/`, `web/`, `scripts/results_table.py`, `tests/test_metrics.py`, `tests/test_infer.py`, `tests/test_evaluate.py`, `tests/test_app.py`, `docs/img/`, `docs/RESULTADOS.md`, `docs/DEMO.md` |
 | CI/informe | Isabela | `.github/`, `README.md`, `CONTRIBUTING.md`, `pyproject.toml`, `requirements*.txt`, `report/`, `docs/PARTICIPACION.md`, `docs/CI_CD.md` |
 
 **Regla:** si alguien necesita cambiar un archivo de otra área, abre un issue o pide revisión al

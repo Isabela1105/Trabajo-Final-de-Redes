@@ -108,7 +108,9 @@ proyecto-gan/
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   └── CODEOWNERS
 ├── app/
-│   └── app.py                     # demo Gradio
+│   ├── server.py                  # demo web principal (FastAPI)
+│   └── gradio_app.py              # demo de respaldo (Gradio)
+├── web/                           # HTML, CSS y JS de la demo
 ├── configs/
 │   ├── base.yaml                  # configuración real de entrenamiento
 │   └── smoke.yaml                 # configuración mínima para CI
@@ -309,7 +311,7 @@ Tiempo objetivo: **menos de 10 minutos**. Si tarda más, se cachea pip y se redu
 1. Construye el informe PDF con Pandoc.
 2. Crea un GitHub Release con notas.
 3. Adjunta el PDF y, si pesa poco, el generador en `.keras`.
-4. Opcional: despliega la demo en Hugging Face Spaces (con aprobación manual).
+4. La demo se ejecuta en local (`docs/DEMO.md`); no se despliega en servicios externos.
 
 ### 5.4 Protección de `main`
 
@@ -494,7 +496,7 @@ Reglas:
 - [ ] `python -m src.gan.train --config configs/smoke.yaml --max-steps 2` funciona en CPU.
 - [ ] Checkpoint del generador incluido o descargable.
 - [ ] Script de inferencia documentado.
-- [ ] Demo (Gradio) funcionando localmente y, si se pudo, desplegada.
+- [ ] Demo web (FastAPI) funcionando localmente; Gradio como respaldo.
 
 ### Informe
 - [ ] PDF con figuras, tablas, referencias IEEE.

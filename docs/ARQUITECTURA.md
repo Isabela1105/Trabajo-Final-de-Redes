@@ -29,19 +29,41 @@ Entrada → encoder (8 bloques) → bottleneck → decoder (8 bloques + skip) �
 
 ### 2.2 Tabla de capas
 
-| Bloque | Tipo | Filtros | Kernel | Stride | Norm | Activación | Salida |
-|---|---|---|---|---|---|---|---|
-| E1 | Conv2D | 64 | 4 | 2 | — | LeakyReLU | 128×128×64 |
-| E2 | Conv2D | 128 | 4 | 2 | Instance | LeakyReLU | 64×64×128 |
-| ... | ... | ... | ... | ... | ... | ... | ... |
-| D1 | ConvTranspose | 512 | 4 | 2 | Instance | ReLU + Dropout | 2×2×512 |
-| ... | ... | ... | ... | ... | ... | ... | ... |
-| Salida | Conv2D | 3 | 4 | 1 | — | tanh | 256×256×3 |
+Generada desde el código (`build_generator(256, ngf=64, niveles=8, norm="instance",
+dropout=0.5)`). La normalización "instance" se implementa con `GroupNormalization(groups=-1)`.
+Todas las convoluciones del encoder y del decoder son 4×4 con stride 2.
+
+| Bloque | Tipo | Filtros | Norm | Activación | Salida | Parámetros |
+|---|---|---|---|---|---|---|
+| E1 | Conv2D | 64 | — | LeakyReLU 0.2 | 128×128×64 | 3 136 |
+| E2 | Conv2D | 128 | Instance | LeakyReLU 0.2 | 64×64×128 | 131 328 |
+| E3 | Conv2D | 256 | Instance | LeakyReLU 0.2 | 32×32×256 | 524 800 |
+| E4 | Conv2D | 512 | Instance | LeakyReLU 0.2 | 16×16×512 | 2 098 176 |
+| E5 | Conv2D | 512 | Instance | LeakyReLU 0.2 | 8×8×512 | 4 195 328 |
+| E6 | Conv2D | 512 | Instance | LeakyReLU 0.2 | 4×4×512 | 4 195 328 |
+| E7 | Conv2D | 512 | Instance | LeakyReLU 0.2 | 2×2×512 | 4 195 328 |
+| E8 (cuello) | Conv2D (con sesgo) | 512 | — | LeakyReLU 0.2 | 1×1×512 | 4 194 816 |
+| D1 | ConvTranspose + skip E7 | 512 | Instance | ReLU + Dropout 0.5 | 2×2×1024 | 4 195 328 |
+| D2 | ConvTranspose + skip E6 | 512 | Instance | ReLU + Dropout 0.5 | 4×4×1024 | 8 389 632 |
+| D3 | ConvTranspose + skip E5 | 512 | Instance | ReLU + Dropout 0.5 | 8×8×1024 | 8 389 632 |
+| D4 | ConvTranspose + skip E4 | 512 | Instance | ReLU | 16×16×1024 | 8 389 632 |
+| D5 | ConvTranspose + skip E3 | 256 | Instance | ReLU | 32×32×512 | 4 194 816 |
+| D6 | ConvTranspose + skip E2 | 128 | Instance | ReLU | 64×64×256 | 1 048 832 |
+| D7 | ConvTranspose + skip E1 | 64 | Instance | ReLU | 128×128×128 | 262 272 |
+| D8 | ConvTranspose (sin skip) | 64 | Instance | ReLU | 256×256×64 | 131 200 |
+| Salida | Conv2D 3×3, stride 1 | 3 | — | tanh | 256×256×3 | 1 731 |
+
+E8 no lleva normalización porque mide 1×1: InstanceNorm restaría la media de un único valor
+y dejaría la señal en 0.
 
 ### 2.3 Parámetros
 
-- `ngf=64`, 8 niveles: ~54 M.
-- `ngf=8`, 4 niveles (smoke): ~0.7 M.
+Contados con `model.count_params()`:
+
+| Configuración | Generador | Discriminador |
+|---|---|---|
+| `configs/base.yaml` (256×256, `ngf=ndf=64`, 8 niveles) | 54 541 315 (≈ 54.5 M) | 2 770 497 (≈ 2.8 M) |
+| `configs/smoke.yaml` (64×64, `ngf=8`, 4 niveles) | 99 203 (≈ 0.1 M) | — |
 
 ### 2.4 Decisiones
 
@@ -64,15 +86,19 @@ Concat(input, target) → Conv 64 → Conv 128 → Conv 256 → Conv 512 → Con
 
 ### 3.2 Tabla de capas
 
-| Bloque | Tipo | Filtros | Kernel | Stride | Norm | Activación | Salida |
-|---|---|---|---|---|---|---|---|
-| C1 | Conv2D | 64 | 4 | 2 | — | LeakyReLU | 128×128×64 |
-| C2 | Conv2D | 128 | 4 | 2 | Instance | LeakyReLU | 64×64×128 |
-| C3 | Conv2D | 256 | 4 | 2 | Instance | LeakyReLU | 32×32×256 |
-| C4 | Conv2D (con ZeroPadding) | 512 | 4 | 1 | Instance | LeakyReLU | 31×31×512 |
-| Salida | Conv2D (con ZeroPadding) | 1 | 4 | 1 | — | — | 30×30×1 |
+Generada desde el código (`build_discriminator(image_size=256, ndf=64)`). Usa
+**BatchNormalization** (no InstanceNorm), como el tutorial de TensorFlow.
 
-Cada celda evalúa un parche de 70×70.
+| Bloque | Tipo | Filtros | Kernel | Stride | Norm | Activación | Salida | Parámetros |
+|---|---|---|---|---|---|---|---|---|
+| Entrada | Concat(degradada, real o generada) | — | — | — | — | — | 256×256×6 | 0 |
+| C1 | Conv2D | 64 | 4 | 2 | — | LeakyReLU 0.2 | 128×128×64 | 6 208 |
+| C2 | Conv2D | 128 | 4 | 2 | Batch | LeakyReLU 0.2 | 64×64×128 | 131 584 |
+| C3 | Conv2D | 256 | 4 | 2 | Batch | LeakyReLU 0.2 | 32×32×256 | 525 312 |
+| C4 | ZeroPadding + Conv2D | 512 | 4 | 1 | Batch | LeakyReLU 0.2 | 31×31×512 | 2 099 200 |
+| Salida | ZeroPadding + Conv2D | 1 | 4 | 1 | — | — (logits) | 30×30×1 | 8 193 |
+
+Cada celda de la salida ve un parche de 70×70 píxeles de la entrada (campo receptivo).
 
 ---
 

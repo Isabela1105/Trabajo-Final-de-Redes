@@ -14,7 +14,7 @@ Las imágenes **no** se generan solas: se producen al correr la evaluación y la
 | `app.png` | pendiente de correr | Juan Sebastian | Captura de `python -m app.server --checkpoint …` con una imagen restaurada. |
 
 Las dos figuras de evaluación se copian aquí desde `outputs/base/eval/` con
-`notebooks/evaluacion_y_demo_colab.ipynb`; no se dibujan a mano.
+`notebooks/pix2pix_colab.ipynb` (sección 5); no se dibujan a mano.
 
 ## Reglas
 

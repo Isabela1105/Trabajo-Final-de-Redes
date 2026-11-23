@@ -14,7 +14,7 @@ los comentarios en espa√±ol, como pide `CONTRIBUTING.md`.
 ```python
 """Generador U-Net para Pix2Pix.
 
-Autor: Juan Pablo D·vila (@Juanpablodavila)
+Autor: Juan Pablo D√°vila (@Juanpablodavila)
 Contrato:
     entrada: (B, image_size, image_size, 3) en [-1, 1]
     salida:  (B, image_size, image_size, 3) en [-1, 1]
@@ -301,7 +301,7 @@ def build_dataset(input_paths, target_paths, image_size: int, batch_size: int, t
 ```python
 """Bucle de entrenamiento de Pix2Pix.
 
-Autor: Cristian MuÒoz (@CristianMP355)
+Autor: Cristian Mu√±oz (@CristianMP355)
 """
 
 import tensorflow as tf

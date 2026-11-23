@@ -109,11 +109,11 @@ corre en CPU; un entrenamiento de 20 épocas genera checkpoints y muestras.
 - Implementar PSNR, SSIM, L1 y (opcional) FID.
 - Evaluar el test set y guardar CSV + figuras.
 - Implementar `infer.py` para una imagen.
-- Crear la app Gradio y desplegarla (local y, si se puede, HF Spaces).
+- Crear la demo web (FastAPI + `web/`) y el respaldo Gradio, ejecutables en local.
 - Escribir la sección **Resultados y demo** del informe.
 
 **Entregable verificable:** `python -m src.gan.evaluate --config configs/base.yaml --checkpoint
-<ruta>` produce `metrics.csv` y `docs/img/grid.png`; `python app/app.py` abre la demo.
+<ruta>` produce `metrics.csv` y `docs/img/grid.png`; `python -m app.server` abre la demo.
 
 **Respaldo:** D.
 
@@ -144,7 +144,7 @@ genera un release con el PDF.
 | Generador | B | C | Formas, skip connections, `ngf`, `tanh`. |
 | Discriminador/pérdidas | C | B | PatchGAN, BCE, L1, λ. |
 | Entrenamiento | D | E | `train_step`, checkpoints, reanudación. |
-| Evaluación/app | E | D | PSNR/SSIM, inferencia, Gradio. |
+| Evaluación/app | E | D | PSNR/SSIM, inferencia, demo web. |
 | CI/informe | F | A | Workflow, branch protection, build del PDF. |
 
 **Regla:** el respaldo debe poder ejecutar y explicar el módulo del dueño. Se prueba en los

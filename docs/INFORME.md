@@ -115,9 +115,9 @@ teórico y anexos.
 
 ### 3.8 Aplicación/demo
 
-- Cómo ejecutar (`pip install`, `python app/app.py`).
+- Cómo ejecutar (`pip install`, `python -m app.server --checkpoint …`).
 - Captura de la interfaz.
-- Link a Hugging Face Spaces (si se desplegó).
+- Flujo `POST /api/restore` (ver `docs/DEMO.md`); la demo es local, sin despliegue externo.
 - Limitaciones: tamaño de imagen, tipos de daño, rostros.
 
 ### 3.9 Discusión

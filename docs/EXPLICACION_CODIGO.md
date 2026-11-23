@@ -15,12 +15,15 @@
 | `src/gan/models/discriminator.py` | PatchGAN condicional. | C | ¿Por qué 30×30? |
 | `src/gan/losses.py` | BCE + L1, label smoothing. | C | ¿Por qué λ = 100? |
 | `src/gan/train.py` | Bucle, `train_step`, checkpoints. | D | ¿En qué orden se actualizan G y D? |
-| `src/gan/evaluate.py` | PSNR, SSIM, L1, CSV, figuras. | E | ¿Qué mide SSIM que no mide PSNR? |
+| `src/gan/metrics.py` | PSNR, SSIM y L1 por imagen en [0, 1]; FID opcional. | E | ¿Qué mide SSIM que no mide PSNR? |
+| `src/gan/evaluate.py` | Test set, baselines, CSVs y figuras. | E | ¿Por qué se incluye la entrada sin restaurar? |
 | `src/gan/infer.py` | Carga un checkpoint y restaura una imagen. | E | ¿Cómo se maneja una imagen de otro tamaño? |
-| `app/app.py` | Interfaz Gradio. | E | ¿Dónde se normaliza la imagen? |
+| `app/server.py` + `web/` | Demo web: FastAPI, `POST /api/restore`, página HTML/CSS/JS. | E | ¿Dónde se normaliza la imagen? |
+| `app/gradio_app.py` | Demo de respaldo con Gradio. | E | ¿Por qué hay un plan B? |
+| `scripts/results_table.py` | Tabla de resultados desde `summary.csv`. | E | ¿Por qué no se escriben las cifras a mano? |
 | `scripts/build_dataset.py` | Construye pares y splits. | A | ¿Cómo evitan la fuga de datos? |
 | `scripts/check_dataset.py` | Valida estructura y manifiesto. | A | ¿Qué falla si una fuente está en dos splits? |
-| `scripts/make_synthetic_sample.py` | Datos falsos para tests/CI. | F | ¿Por qué el CI no usa el dataset real? |
+| `scripts/make_synthetic_sample.py` | Datos falsos para tests/CI. | F (hecho por E) | ¿Por qué el CI no usa el dataset real? |
 | `tests/*` | Verifican contratos y smoke. | Todos | ¿Qué cubre y qué no cubre? |
 
 ---

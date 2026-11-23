@@ -256,7 +256,7 @@ Si la respuesta es no, no se aprueba todavía.
 - [ ] `configs/base.yaml` reproduce el resultado.
 - [ ] Checkpoint del generador descargable.
 - [ ] `infer.py` funciona con una imagen nueva.
-- [ ] `app/app.py` funciona localmente.
+- [ ] `python -m app.server --checkpoint …` funciona localmente.
 
 ### 6.3 Dataset
 
@@ -286,7 +286,7 @@ Si la respuesta es no, no se aprueba todavía.
 
 ### 6.6 Demo
 
-- [ ] Gradio funciona sin internet.
+- [ ] La demo web funciona sin internet (Gradio como respaldo).
 - [ ] Ejemplos incluidos.
 - [ ] Captura en `docs/img/app.png`.
 - [ ] Enlace a HF Spaces (si se desplegó).
