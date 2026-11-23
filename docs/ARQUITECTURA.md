@@ -198,11 +198,65 @@ que, en ablación, D no se actualiza.
 
 ## 6. Evaluación
 
-- PSNR, SSIM, L1 en test.
-- Baselines: entrada, filtro clásico, U-Net L1, Pix2Pix.
-- Figuras: `input | target | predicción`.
-- Galería de fallos.
-- FID opcional.
+Responsable: Juan Sebastian Castillo (`@Juansec01`). Implementación en `src/gan/metrics.py`,
+`src/gan/evaluate.py` y `src/gan/infer.py`.
+
+### 6.1 Protocolo
+
+| Regla | Valor |
+|---|---|
+| Split | siempre `test` (15 fuentes, 45 pares); nunca `train` ni `val` |
+| Rango | se desnormaliza `[-1, 1] → [0, 1]` antes de medir |
+| Unidad | imagen completa de 256×256; nunca por parche |
+| Agregado | media ± desviación estándar sobre las imágenes del split |
+| Desglose | por tipo de degradación, leyendo `data/manifest.csv` |
+| Fallos | las 4 imágenes con menor PSNR del modelo principal, sin elegir a mano |
+
+### 6.2 Métricas
+
+| Métrica | Fórmula | Rango | Mejor | Qué no mide |
+|---|---|---|---|---|
+| PSNR | `10·log10(1 / MSE)` | dB, 0–100 | ↑ | Percepción: castiga igual un desplazamiento de color que una textura borrada. |
+| SSIM | luminancia · contraste · estructura (ventana gaussiana 11×11) | 0–1 | ↑ | Color global; es sensible a la alineación. |
+| L1 | `mean(|y − ŷ|)` | 0–1 | ↓ | Lo mismo que PSNR, pero lineal y más robusta a valores atípicos. |
+
+Con una imagen idéntica: SSIM = 1, L1 = 0 y PSNR = 100 dB (tope fijo para que la media sea
+finita). `tests/test_metrics.py` verifica estos casos y las fórmulas cerradas.
+
+> **Diferencia con `metrics.csv` del entrenamiento.** `train.py` mide la validación en `[-1, 1]`:
+> el PSNR es el mismo, pero su L1 es el **doble** del L1 en `[0, 1]` y su SSIM cambia un poco.
+> Por eso la tabla de resultados se genera con `src/gan/evaluate.py` y no con ese CSV.
+
+### 6.3 Líneas base
+
+| Fila | Qué es | Para qué sirve |
+|---|---|---|
+| Entrada (sin restaurar) | `ŷ = x`, la foto degradada tal cual | Piso mínimo: si el modelo no lo supera, no aporta. |
+| Filtro de mediana 3×3 | restauración clásica sin aprendizaje | Muestra si basta con un filtro de ruido. |
+| U-Net solo L1 | mismo generador, `use_gan: false`, `λ = 1000` (`configs/ablation_l1.yaml`) | Aísla el aporte del discriminador. |
+| **Pix2Pix (λ = 100)** | U-Net + PatchGAN, `configs/base.yaml` | Modelo principal. |
+
+Las dos primeras filas no necesitan checkpoint. La tercera solo aparece si se entrena la
+ablación y se pasa su checkpoint con `--model "U-Net solo L1=<ruta>"`.
+
+### 6.4 Tabla de resultados (plantilla)
+
+Todas las cifras salen de `outputs/<corrida>/eval/summary.csv`; la tabla del README y del
+informe se regenera con `python scripts/results_table.py`, nunca se escribe a mano.
+
+| Modelo | n | PSNR (dB) ↑ | SSIM ↑ | L1 ↓ |
+|---|---|---|---|---|
+| Entrada (sin restaurar) | 45 | media ± std | media ± std | media ± std |
+| Filtro de mediana 3×3 | 45 | … | … | … |
+| U-Net solo L1 | 45 | … | … | … |
+| Pix2Pix (λ = 100) | 45 | … | … | … |
+
+### 6.5 Figuras
+
+- `docs/img/results_grid.png`: columnas `entrada | mediana | Pix2Pix | objetivo`.
+- `docs/img/failures.png`: los peores casos por PSNR, con su degradación.
+- `docs/img/app.png`: captura de la demo web.
+- FID opcional (`--fid`): necesita descargar InceptionV3; no se usa en CI.
 
 ---
 
