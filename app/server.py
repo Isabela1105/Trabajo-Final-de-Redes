@@ -29,7 +29,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 
-from src.gan.infer import load_generator, restore_image
+from src.gan.infer import MAX_SIDE, load_generator, restore_image
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = REPO_ROOT / "web"
@@ -131,8 +131,10 @@ def create_app(
             raise HTTPException(status_code=413, detail="La imagen supera 20 MB.")
         try:
             image = Image.open(io.BytesIO(data))
+            # JPEG grandes: decodificar directamente a una escala reducida (mucho más rápido).
+            image.draft("RGB", (MAX_SIDE, MAX_SIDE))
             image.load()
-        except (UnidentifiedImageError, OSError) as error:
+        except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as error:
             raise HTTPException(status_code=415, detail="No es una imagen válida.") from error
 
         generator = holder.get()
