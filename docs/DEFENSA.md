@@ -23,7 +23,7 @@
 | 7–9 | Discriminador y pérdidas | C | PatchGAN, BCE + L1, λ = 100. |
 | 9–11 | Entrenamiento | D | `train_step`, checkpoints, hiperparámetros, estabilidad. |
 | 11–14 | Resultados | E | PSNR/SSIM/L1, baselines, figuras, fallos. |
-| 14–16 | Demo y limitaciones | E + A | Gradio, ejemplos, alucinación, trabajo futuro. |
+| 14–16 | Demo y limitaciones | E + A | Demo web (FastAPI), ejemplos del test, alucinación, trabajo futuro. |
 | 16–20 | Preguntas | Todos | Responder con precisión y honestidad. |
 
 **Regla:** cada diapositiva debe poder ser explicada por cualquier integrante. Las diapositivas
@@ -54,7 +54,8 @@ llevan notas del orador en `docs/presentacion_notas.md`.
 
 ## 4. Demo: plan A, B y C
 
-- **Plan A:** app Gradio local o en Hugging Face Spaces, con 3 imágenes de ejemplo.
+- **Plan A:** demo web local (`python -m app.server --checkpoint outputs/base/checkpoints`) con
+  el selector de ejemplos del test. Si falla el navegador, `python -m app.gradio_app` (respaldo).
 - **Plan B:** video/GIF pregrabado de la demo (30–60 s).
 - **Plan C:** galería de resultados precalculada en `docs/img/` y en las diapositivas.
 

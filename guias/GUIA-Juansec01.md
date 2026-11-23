@@ -19,7 +19,7 @@ Convertir el modelo entrenado en **evidencia medible y demostrable**:
 - Evaluar el test set y guardar `metrics.csv`.
 - Generar figuras `input | target | predicción` y galería de fallos.
 - Implementar inferencia sobre una imagen nueva.
-- Construir la demo Gradio (local y, si alcanza, Hugging Face Spaces).
+- Construir la demo web (FastAPI + `web/`) con Gradio como respaldo, ejecutable en local.
 - Documentar resultados, baselines y limitaciones.
 
 Sin tu módulo el proyecto no tiene números ni demo. Eres el puente entre "el modelo entrenó" y
@@ -32,7 +32,9 @@ Sin tu módulo el proyecto no tiene números ni demo. Eres el puente entre "el m
 ```text
 src/gan/evaluate.py
 src/gan/infer.py
-app/app.py
+app/server.py
+web/
+app/gradio_app.py
 tests/test_metrics.py
 tests/test_app.py
 docs/img/results_grid.png
@@ -149,20 +151,16 @@ python -m src.gan.infer --checkpoint outputs/smoke/generator.keras --input data/
 - Figuras:
   - `docs/img/results_grid.png`: 4–8 filas `input | target | predicción`.
   - `docs/img/failures.png`: los 4 peores casos por L1.
-- `app/app.py` con Gradio:
-  - `gr.Image(type="pil")` de entrada.
-  - Botón "Restaurar".
-  - Slider opcional de tamaño.
-  - Salida `gr.Image`.
-  - Ejemplos precargados desde `data/sample/`.
-- Test de la app sin levantar servidor: importar la función de predicción y llamarla con una
-  imagen pequeña. No testear la UI completa.
+- `app/server.py` con FastAPI (`POST /api/restore`) y la página `web/` (HTML, CSS y JS);
+  `app/gradio_app.py` como respaldo.
+- Test de la app con `fastapi.testclient.TestClient`: carga del modelo, PNG de salida,
+  errores 400/415/503.
 
 **Criterio de aceptación:**
 
 ```bash
-python -m src.gan.evaluate --config configs/base.yaml --checkpoint outputs/base/checkpoints/generator.keras --split test
-python app/app.py
+python -m src.gan.evaluate --config configs/base.yaml --checkpoint outputs/base/checkpoints --split test
+python -m app.server --checkpoint outputs/base/checkpoints
 pytest tests/test_app.py -q
 ```
 
@@ -180,7 +178,7 @@ pytest tests/test_app.py -q
 - Baseline "sin restaurar" = comparar `input` contra `target`. Es obligatorio: sin él no se sabe
   si el modelo aporta algo.
 - FID opcional; si no se alcanza, decirlo en el informe.
-- Subir la app a Hugging Face Spaces **sin** el checkpoint en git: usar Release, HF Hub o Drive.
+- La demo corre en local con el checkpoint del Drive (nunca en git).
 - Documentar el despliegue paso a paso.
 
 ### Semana 4 — Cierre
@@ -232,26 +230,26 @@ pytest tests/test_app.py -q
 
 ## 9. Entregables
 
-- [ ] `evaluate.py` con PSNR, SSIM, L1 y CSV.
-- [ ] `infer.py` que funciona con una imagen nueva.
-- [ ] `app/app.py` con Gradio y ejemplos.
-- [ ] `tests/test_metrics.py` y `tests/test_app.py` verdes.
-- [ ] `docs/img/results_grid.png`, `failures.png`, `app.png`.
-- [ ] Tabla de resultados con baselines.
-- [ ] Documentación de despliegue.
+- [x] `evaluate.py` con PSNR, SSIM, L1 y CSV.
+- [x] `infer.py` que funciona con una imagen nueva.
+- [x] `app/server.py` + `web/` con ejemplos; Gradio de respaldo.
+- [x] `tests/test_metrics.py` y `tests/test_app.py` verdes.
+- [ ] `docs/img/results_grid.png`, `failures.png`, `app.png` (correr `notebooks/evaluacion_y_demo_colab.ipynb`).
+- [ ] Tabla de resultados con baselines (código listo; falta correrlo con el checkpoint).
+- [x] Documentación de despliegue (`docs/DEMO.md`).
 - [ ] 15 commits y 6 PRs.
 - [ ] 4 revisiones a otros.
-- [ ] Sección **Resultados y demo** del informe.
+- [x] Sección **Resultados y demo** del informe (§6 y §7).
 
 ---
 
 ## 10. Checklist final
 
-- [ ] `pytest -q` pasa.
-- [ ] Las métricas se calculan en `[0,1]` y sobre `split=test`.
-- [ ] La tabla del README coincide con `metrics.csv`.
-- [ ] La demo corre sin internet.
+- [x] `pytest -q` pasa.
+- [x] Las métricas se calculan en `[0,1]` y sobre `split=test`.
+- [ ] La tabla del README coincide con `summary.csv` (`scripts/results_table.py`).
+- [x] La demo corre sin internet.
 - [ ] Hay video/GIF de respaldo de la demo.
 - [ ] Las figuras están en el informe y en `docs/img/`.
-- [ ] Tu nombre aparece en `docs/PARTICIPACION.md`.
+- [x] Tu nombre aparece en `docs/PARTICIPACION.md`.
 - [ ] Puedes explicar la tabla y la demo sin mirar apuntes.

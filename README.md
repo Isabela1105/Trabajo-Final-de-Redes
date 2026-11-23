@@ -22,9 +22,9 @@ pares `(input, target)` con un pipeline de degradaciones reproducible. La foto l
 
 - Código comentado y reproducible en TensorFlow/Keras.
 - Dataset propio documentado (ficha, manifiesto, splits, ética).
-- Modelo entrenado y checkpoint descargable.
+- Modelo entrenado en Colab (checkpoint en el Drive del equipo, no en git).
 - Evaluación con PSNR, SSIM y L1 + comparación con baselines.
-- Demo Gradio para restaurar una imagen.
+- Demo web (FastAPI + HTML/CSS/JS) para restaurar una imagen; Gradio como respaldo.
 - Informe en PDF y material de sustentación.
 - Evidencia de participación de los 6 integrantes (commits, PRs, revisiones).
 
@@ -35,18 +35,18 @@ datos descargados sin construir el dataset propio.
 
 ## 2. Equipo
 
-| Integrante | GitHub | Código | Rol |
+| Integrante | GitHub | Código | Rol asignado |
 |---|---|---|---|
 | Isabella Ortiz Hernandez | [@Isabellaortizher-collab](https://github.com/Isabellaortizher-collab) | 2226215 | Datos y dataset |
 | Juan Pablo Dávila Moncayo | [@Juanpablodavila](https://github.com/Juanpablodavila) | 2216168 | Generador U-Net |
 | Jeremy Santiago Caicedo Cabezas | [@JeremyCaicedo](https://github.com/JeremyCaicedo) | 2210721 | Discriminador y pérdidas |
 | Cristian Fabian Muñoz Piedrahita | [@CristianMP355](https://github.com/CristianMP355) | 2230865 | Entrenamiento |
-| Juan Sebastian Castillo Acevedo | [@Juansec01](https://github.com/Juansec01) | 2231921 | Evaluación y demo |
-| Isabela Cabezas Obregon| [@Isabela1105](https://github.com/Isabela1105) | 2226013 | CI/CD, integración e informe |
+| Juan Sebastian Castillo Acevedo | [@Juansec01](https://github.com/Juansec01) | 2231921 | Evaluación, inferencia y demo |
+| Isabela Cabezas Obregón | [@Isabela1105](https://github.com/Isabela1105) | 2226013 | CI/CD, integración e informe |
 
-> **Nota:** el nombre y código de la última fila se completan cuando el equipo confirme el dato.
-> El rol se puede intercambiar antes de crear las ramas; el plan de commits está diseñado para
-> que todos programen y todos puedan explicar cualquier módulo.
+Quién hizo qué según el historial de GitHub (no según el plan) está en la sección 15 y en
+[`docs/PARTICIPACION.md`](docs/PARTICIPACION.md). El generador U-Net, asignado a Juan Pablo,
+lo implementó Jeremy (#18).
 
 ---
 
@@ -81,8 +81,8 @@ Pérdidas:
 | Generador | `(B,256,256,3)` → `(B,256,256,3)` en `[-1,1]` |
 | Discriminador | `[(B,256,256,3), (B,256,256,3)]` → `(B,30,30,1)` logits |
 | Optimizador | Adam, lr 2e-4, β1 0.5 |
-| Batch | 1–4 según GPU |
-| Épocas | 100 con early stopping por L1 de validación |
+| Batch | 2 (`configs/base.yaml`) |
+| Épocas | 100 con early stopping por L1 de validación (paciencia 15); la corrida de Colab usó 20 |
 
 Detalle completo: [`docs/MODELOS.md`](docs/MODELOS.md) y
 [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md).
@@ -91,14 +91,31 @@ Detalle completo: [`docs/MODELOS.md`](docs/MODELOS.md) y
 
 ## 4. Resultados
 
-> Completar al final de la semana 3. No inventar cifras.
+### 4.1 Entrenamiento (corrida base en Colab, 20 épocas)
 
-| Modelo | PSNR ↑ | SSIM ↑ | L1 ↓ |
+![Curvas de entrenamiento](docs/img/curvas_entrenamiento.png)
+
+| Época | L1 val ([-1, 1]) ↓ | PSNR val (dB) ↑ | SSIM val ↑ |
 |---|---|---|---|
-| Entrada (sin restaurar) | — | — | — |
-| Filtro clásico (mediana/Gaussiano) | — | — | — |
-| U-Net solo L1 | — | — | — |
-| **Pix2Pix (λ = 100)** | — | — | — |
+| 0 | 0.1973 | 18.15 | 0.4340 |
+| 16 (mejor L1) | 0.1443 | — | — |
+| 19 (última) | 0.1482 | 20.26 | 0.5077 |
+
+Fuente: `notebooks/pix2pix_entrenamiento_colab.ipynb` y
+[`docs/resultados/colab_base_20ep_log.csv`](docs/resultados/colab_base_20ep_log.csv).
+El generador mejora 2.1 dB de PSNR y 25 % de L1 en validación; el discriminador gana muy pronto
+(pérdida ≈ 0 desde la época 2). Lectura completa en [`docs/RESULTADOS.md`](docs/RESULTADOS.md).
+
+### 4.2 Split de prueba (tabla final)
+
+Generada con `python -m src.gan.evaluate` + `python scripts/results_table.py`; no se escribe
+a mano. Líneas base y protocolo: [`docs/ARQUITECTURA.md` §6](docs/ARQUITECTURA.md).
+
+<!-- RESULTADOS:INICIO -->
+_Pendiente de ejecutar `src/gan/evaluate.py` sobre el split `test` con el checkpoint de la
+corrida base (`notebooks/evaluacion_y_demo_colab.ipynb`). Las cifras de validación de 4.1 no
+reemplazan esta tabla._
+<!-- RESULTADOS:FIN -->
 
 Figuras: [`docs/img/results_grid.png`](docs/img/) · Fallos:
 [`docs/img/failures.png`](docs/img/)
@@ -107,13 +124,15 @@ Figuras: [`docs/img/results_grid.png`](docs/img/) · Fallos:
 
 ## 5. Demo
 
+Demo principal: página propia servida por FastAPI, sin internet.
+
 ```bash
-python app/app.py
+python -m app.server --checkpoint outputs/base/checkpoints
+# abrir http://127.0.0.1:8000
 ```
 
-O en Hugging Face Spaces: `<enlace pendiente>`
-
-![Demo](docs/img/app.png)
+Respaldo con Gradio: `python -m app.gradio_app --checkpoint outputs/base/checkpoints`.
+API, Colab y plan A/B/C: [`docs/DEMO.md`](docs/DEMO.md).
 
 ---
 
@@ -183,21 +202,24 @@ python scripts/check_dataset.py --root data/processed --manifest data/manifest.c
 # Entrenamiento principal
 python -m src.gan.train --config configs/base.yaml
 
-# Reanudar tras una desconexión de Colab
-python -m src.gan.train --config configs/base.yaml --resume outputs/base/checkpoints
+# Reanudar tras una desconexión de Colab (último checkpoint de outputs/base/checkpoints)
+python -m src.gan.train --config configs/base.yaml --resume
+
+# Ablación: U-Net solo L1 (use_gan: false, λ = 1000)
+python -m src.gan.train --config configs/ablation_l1.yaml
 ```
 
 Salidas:
 
 ```text
 outputs/base/
-├── checkpoints/     # G, D y optimizadores
+├── checkpoints/     # ckpt-N (G, D y optimizadores) + config.yaml + metadata.json
 ├── samples/         # grids cada N épocas
 ├── logs/            # TensorBoard
 └── metrics.csv      # pérdidas y métricas
 ```
 
-Hardware recomendado: Colab T4 o Kaggle P100. En Windows, TensorFlow ≥ 2.11 no tiene GPU nativa;
+Notebooks de Colab: [`notebooks/`](notebooks/README.md). Hardware recomendado: Colab T4 o Kaggle P100. En Windows, TensorFlow ≥ 2.11 no tiene GPU nativa;
 usar WSL2, Colab o Kaggle.
 
 ---
@@ -205,20 +227,22 @@ usar WSL2, Colab o Kaggle.
 ## 9. Evaluación e inferencia
 
 ```bash
-# Evaluar el test set
-python -m src.gan.evaluate \
-  --config configs/base.yaml \
-  --checkpoint outputs/base/checkpoints/generator.keras \
-  --split test
+# Evaluar el test set: Entrada, Mediana 3x3 y Pix2Pix (+ ablación si se pasa)
+python -m src.gan.evaluate --config configs/base.yaml \
+  --checkpoint outputs/base/checkpoints \
+  --model "U-Net solo L1=outputs/ablation/checkpoints"
+
+# Insertar la tabla en README e informe
+python scripts/results_table.py --summary outputs/base/eval/summary.csv \
+  --update README.md report/informe.md docs/RESULTADOS.md
 
 # Restaurar una imagen
-python -m src.gan.infer \
-  --checkpoint outputs/base/checkpoints/generator.keras \
-  --input ruta/a/foto.jpg \
-  --output ruta/a/restaurada.png
+python -m src.gan.infer --checkpoint outputs/base/checkpoints \
+  --input ruta/a/foto.jpg --output ruta/a/restaurada.png
 ```
 
-Métricas: PSNR, SSIM, L1. Opcional: FID y encuesta humana.
+Métricas: PSNR, SSIM y L1 en `[0, 1]` por imagen, media ± desviación estándar. FID opcional
+con `--fid`. Atajos: `make eval`, `make results`, `make demo`.
 
 ---
 
@@ -227,50 +251,44 @@ Métricas: PSNR, SSIM, L1. Opcional: FID y encuesta humana.
 ```text
 .
 ├── .github/
-│   ├── workflows/ci.yml          # lint + tests + smoke training
+│   ├── workflows/ci.yml          # lint + tests + muestra sintética + smoke training
 │   ├── workflows/release.yml     # informe + release en tags v*
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── ISSUE_TEMPLATE/tarea.md
 │   └── CODEOWNERS
-├── app/app.py                    # demo Gradio
+├── app/
+│   ├── server.py                 # demo principal (FastAPI)
+│   └── gradio_app.py             # demo de respaldo
+├── web/                          # index.html, styles.css, app.js de la demo
 ├── configs/
-│   ├── base.yaml                 # entrenamiento real
-│   └── smoke.yaml                # CI / CPU
-├── data/                         # no versionado (excepto README y sample)
+│   ├── base.yaml                 # entrenamiento real (hiperparámetros congelados)
+│   ├── smoke.yaml                # CI / CPU
+│   └── ablation_l1.yaml          # U-Net solo L1
+├── data/                         # README, manifest.csv y fuentes (las imágenes no se versionan)
 ├── docs/
-│   ├── ARQUITECTURA.md
-│   ├── CI_CD.md
-│   ├── DATASET.md
-│   ├── DECISIONES.md
-│   ├── DEFENSA.md
-│   ├── EQUIPO.md
-│   ├── EXPLICACION_CODIGO.md
-│   ├── INFORME.md
-│   ├── PARTICIPACION.md
-│   └── img/
-├── notebooks/
+│   ├── ARQUITECTURA.md · DATASET.md · MODELOS.md · DECISIONES.md
+│   ├── RESULTADOS.md · DEMO.md · DEFENSA.md · INFORME.md
+│   ├── PARTICIPACION.md · EQUIPO.md · PLAN_COMMITS.md · CI_CD.md
+│   ├── resultados/               # registros de entrenamiento transcritos
+│   └── img/                      # figuras del README y del informe
+├── guias/                        # guía individual por integrante
+├── notebooks/                    # Colab: entrenamiento, ablación, evaluación y demo
 ├── report/
 │   ├── informe.md
 │   └── referencias.bib
 ├── scripts/
-│   ├── build_dataset.py
-│   ├── check_dataset.py
-│   └── make_synthetic_sample.py
+│   ├── build_dataset.py · check_dataset.py · dataset_report.py · prepare_real.py
+│   ├── make_synthetic_sample.py  # datos falsos para CI
+│   ├── results_table.py          # tabla de resultados desde summary.csv
+│   └── plot_training_log.py      # curvas de entrenamiento
 ├── src/gan/
-│   ├── config.py
-│   ├── data/
-│   ├── models/
-│   ├── losses.py
-│   ├── train.py
-│   ├── evaluate.py
-│   ├── infer.py
-│   └── utils/
+│   ├── config.py · losses.py · train.py
+│   ├── metrics.py · evaluate.py · infer.py
+│   ├── data/                     # dataset, degradaciones, estadísticas, tf.data
+│   ├── models/                   # blocks.py, generator.py, discriminator.py
+│   └── utils/viz.py
 ├── tests/
-├── .gitignore
-├── .pre-commit-config.yaml
-├── CONTRIBUTING.md
-├── LICENSE
-├── Makefile
+├── CONTRIBUTING.md · GUIA.md · LICENSE · Makefile
 ├── pyproject.toml
 ├── requirements.txt
 └── requirements-dev.txt
@@ -295,14 +313,17 @@ Métricas: PSNR, SSIM, L1. Opcional: FID y encuesta humana.
 
 ### 11.2 Ramas por integrante
 
-| Integrante | Ramas principales |
+Plan original completo en [`docs/PLAN_COMMITS.md`](docs/PLAN_COMMITS.md). Ramas que existen o
+existieron de verdad:
+
+| Integrante | Ramas reales |
 |---|---|
-| Isabella Ortiz (@Isabellaortizher-collab) | `docs/03-protocolo-dataset`, `feat/07-dataset-pairs`, `feat/09-build-dataset`, `feat/14-dataset-v2`, `feat/21-real-eval`, `docs/28-dataset-final` |
-| Juan Pablo (@Juanpablodavila) | `docs/04-contrato-modelos`, `feat/10-generator-unet`, `docs/11-generator-layers`, `refactor/17-generator-norm`, `feat/24-generator-tuning`, `fix/30-generator-borders` |
-| Jeremy (@JeremyCaicedo) | `docs/05-contrato-discriminador`, `feat/12-patchgan-losses`, `docs/13-loss-theory`, `feat/20-loss-options`, `feat/27-gradient-penalty`, `fix/32-loss-nan` |
-| Cristian (@CristianMP355) | `chore/06-config`, `feat/14-train-loop`, `test/15-smoke-train`, `feat/23-train-integration`, `feat/29-train-experiments`, `fix/34-colab-checkpoint` |
-| Juan Sebastian (@Juansec01) | `docs/06-protocolo-eval`, `feat/16-metrics-inference`, `docs/17-baselines`, `feat/26-eval-app`, `feat/33-results-app`, `fix/37-app-formats` |
-| Isabela (@Isabela1105) | `chore/01-init`, `chore/02-tooling`, `test/03-synthetic-data`, `ci/29-quality-gates`, `ci/37-report-release`, `docs/40-participacion` |
+| Isabella Ortiz (@Isabellaortizher-collab) | PRs #10, #11, #12, #15, #16, #17 (squash merge, ramas borradas) |
+| Juan Pablo (@Juanpablodavila) | ninguna todavía |
+| Jeremy (@JeremyCaicedo) | `feat/generator-unet`, `feat/discriminator-losses`, `Jeremycaicedo-patch-1` (#18, #21, #22) |
+| Cristian (@CristianMP355) | PRs #25–#29 (squash merge) |
+| Juan Sebastian (@Juansec01) | `feat/16-metrics-inference`, `docs/17-baselines`, `feat/26-eval-app`, `feat/33-results-app`, `fix/37-app-formats`, `test/41-synthetic-sample`, `docs/43-cierre-participacion` |
+| Isabela (@Isabela1105) | PR #14 |
 
 ### 11.3 Commits
 
@@ -379,7 +400,9 @@ Configuración y solución de problemas: [`docs/CI_CD.md`](docs/CI_CD.md).
 | [`docs/INFORME.md`](docs/INFORME.md) | Estructura del informe y responsables. |
 | [`docs/DEFENSA.md`](docs/DEFENSA.md) | Guion y banco de preguntas. |
 | [`docs/EXPLICACION_CODIGO.md`](docs/EXPLICACION_CODIGO.md) | Recorrido archivo → función → para qué sirve. |
-| [`docs/PARTICIPACION.md`](docs/PARTICIPACION.md) | Evidencia de participación. |
+| [`docs/PARTICIPACION.md`](docs/PARTICIPACION.md) | Evidencia de participación (desde el historial real). |
+| [`docs/RESULTADOS.md`](docs/RESULTADOS.md) | Curvas, validación, tabla del test y ablación. |
+| [`docs/DEMO.md`](docs/DEMO.md) | Ejecutar y desplegar la demo. |
 | [`docs/REFERENCIA_CODIGO.md`](docs/REFERENCIA_CODIGO.md) | Código comentado de referencia. |
 | [`docs/MERGE_Y_REVISION.md`](docs/MERGE_Y_REVISION.md) | Cómo integrar y revisar todo al final. |
 
@@ -392,7 +415,7 @@ Configuración y solución de problemas: [`docs/CI_CD.md`](docs/CI_CD.md).
 | Jeremy Caicedo | Discriminador y pérdidas | [`guias/GUIA-JeremyCaicedo.md`](guias/GUIA-JeremyCaicedo.md) |
 | Cristian Muñoz | Entrenamiento | [`guias/GUIA-CristianMP355.md`](guias/GUIA-CristianMP355.md) |
 | Juan Sebastian Castillo | Evaluación y demo | [`guias/GUIA-Juansec01.md`](guias/GUIA-Juansec01.md) |
-| Isabela | CI/CD, integración e informe | [`guias/GUIA-Isabela1105.md`](guias/GUIA-Isabela1105.md) |
+| Isabela Cabezas | CI/CD, integración e informe | [`guias/GUIA-Isabela1105.md`](guias/GUIA-Isabela1105.md) |
 
 Índice y orden de lectura: [`guias/README.md`](guias/README.md).
 
@@ -411,39 +434,36 @@ las pérdidas, el dataset, el entrenamiento, las métricas y una línea de códi
 
 ## 15. Participación
 
-| Integrante | Commits objetivo | PRs | Revisiones | Informe | Defensa |
-|---|---|---|---|---|---|
-| Isabella Ortiz | 14 | 6 | 4 | Dataset | Datos |
-| Juan Pablo Dávila | 14 | 6 | 5 | Arquitectura U-Net | Generador |
-| Jeremy Caicedo | 14 | 6 | 5 | Marco teórico/pérdidas | Pérdidas |
-| Cristian Muñoz | 15 | 6 | 5 | Entrenamiento/experimentos | Train loop |
-| Juan Sebastian Castillo | 15 | 6 | 4 | Resultados/demo | Resultados |
-| Isabela | 15 | 6 | 5 | Intro/conclusiones/anexos | CI/cierre |
+Resumen del historial de `main` (detalle, enlaces y pendientes en
+[`docs/PARTICIPACION.md`](docs/PARTICIPACION.md)):
 
-Verificación:
+| Integrante | PRs en `main` | Aporte verificable | Informe / defensa |
+|---|---|---|---|
+| Isabella Ortiz | 6 (#10–#12, #15–#17) | Dataset completo y cargador `tf.data` | Dataset |
+| Juan Pablo Dávila | 0 | Sin commits a la fecha | Generador (asignado) |
+| Jeremy Caicedo | 2 (#18, #21) + 1 commit directo | Generador U-Net, PatchGAN y pérdidas | Marco teórico, arquitectura |
+| Cristian Muñoz | 5 (#25–#29) | Entrenamiento, checkpoints, ablación | Entrenamiento |
+| Juan Sebastian Castillo | andamiaje inicial + 7 PRs de cierre | Repo base, evaluación, inferencia, demo, CI smoke, docs de cierre | Resultados, demo |
+| Isabela Cabezas | 1 (#14) | `.gitattributes`; dueña del repo y del release | Intro, conclusiones |
 
 ```bash
-git shortlog -sne --all
+git shortlog -sne origin/main
 ```
-
-En GitHub: **Insights → Contributors**, **Pull Requests → Author/Reviewer**, **Issues → Assignee**.
-
-Tabla detallada: [`docs/PARTICIPACION.md`](docs/PARTICIPACION.md).
 
 ---
 
 ## 16. Checklist de entrega
 
-- [ ] Repo público con los 6 integrantes como collaborators.
-- [ ] `main` protegida y CI verde.
-- [ ] Dataset construido y documentado.
-- [ ] Generador, discriminador, pérdidas y train loop implementados.
-- [ ] Entrenamiento real con checkpoint descargable.
-- [ ] Métricas PSNR/SSIM/L1 + baselines.
-- [ ] Demo Gradio funcionando.
-- [ ] Informe PDF con figuras, tablas y referencias IEEE.
-- [ ] `docs/PARTICIPACION.md` con enlaces a PRs/commits.
-- [ ] Tag `v1.0.0` con release.
+- [x] Repo público con los 6 integrantes como collaborators.
+- [x] CI con lint, tests y smoke training (con muestra sintética).
+- [x] Dataset construido y documentado (456 pares, split 80/10/10 por fuente).
+- [x] Generador, discriminador, pérdidas y train loop implementados.
+- [x] Entrenamiento real en Colab con checkpoint en Drive (20 épocas).
+- [x] Métricas PSNR/SSIM/L1 + baselines implementadas y probadas.
+- [x] Demo web (FastAPI) + respaldo Gradio.
+- [ ] Tabla del test generada (`notebooks/evaluacion_y_demo_colab.ipynb`).
+- [ ] Ablación sin GAN entrenada (`notebooks/pix2pix_base_y_ablacion_colab.ipynb`).
+- [ ] Informe PDF desde `report/informe.md` y tag `v1.0.0` con release.
 - [ ] Dos ensayos de defensa con presentador aleatorio.
 
 ---
