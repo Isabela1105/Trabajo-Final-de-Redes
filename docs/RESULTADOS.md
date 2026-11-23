@@ -81,13 +81,75 @@ checkpoint desde Drive.
 |---|---|---|---|---|
 | Entrada (sin restaurar) | 45 | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
 | Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
+| **U-Net solo L1** | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| Pix2Pix (λ = 100) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
 
-_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test_lineas_base_summary.csv`._
-
-_Filas de Pix2Pix y U-Net solo L1: pendientes del checkpoint de la corrida de Cristian (`Redes-Pix2Pix/checkpoints/`)._
+_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test/summary.csv`._
 <!-- RESULTADOS:FIN -->
 
-## 3. Corrida de 45 épocas y ablación (Cristian Muñoz)
+### 2.1 Qué pesos se evaluaron
+
+Los checkpoints de las corridas de Colab no quedaron accesibles, así que la tabla usa una corrida
+reproducida con `configs/base.yaml` (misma semilla 42, mismo dataset) durante **20 épocas** para
+Pix2Pix y 20 para la ablación (`use_gan: false`, λ = 1000), en CPU. Sus curvas de validación
+coinciden con la corrida de Isabela: época 0 L1 0.1967 frente a 0.1973; época 19 PSNR 20.25 dB
+frente a 20.26 dB.
+
+| Corrida | L1 val ([-1, 1]) | PSNR val (dB) | SSIM val | Registro |
+|---|---|---|---|---|
+| Pix2Pix, 20 épocas (pesos publicados) | 0.1506 | 20.25 | 0.5146 | `docs/resultados/base_20ep_metrics.csv` |
+| U-Net solo L1, 20 épocas (pesos publicados) | 0.1497 | 20.31 | 0.5335 | `docs/resultados/ablacion_20ep_metrics.csv` |
+
+![Curvas Pix2Pix](img/curvas_base_20ep.png)
+![Curvas ablación](img/curvas_ablacion_20ep.png)
+
+Los pesos del generador de ambas corridas están en el release `v1.0.0`.
+
+### 2.2 Lectura de la tabla
+
+- **Los dos modelos superan a no hacer nada**, pero por poco: Pix2Pix +0.37 dB de PSNR y +0.028 de
+  SSIM sobre la entrada; la ablación +0.57 dB y +0.045. La mediana empeora el PSNR (−0.25 dB).
+- **La ablación supera a Pix2Pix** en las tres métricas y en 33 de las 45 imágenes. Es lo esperado:
+  PSNR, SSIM y L1 premian la fidelidad píxel a píxel que optimiza L1; el término adversarial empuja
+  a texturas plausibles que no coinciden con el píxel exacto.
+- **El modelo ayuda donde hay más daño.** Pix2Pix mejora la entrada en 28 de 45 imágenes: en las
+  que mejora, la entrada tenía 18.9 dB en promedio; en las que empeora, 22.6 dB. Con fotos poco
+  dañadas, el modelo cambia color y textura más de lo necesario.
+- **La desviación estándar baja** (2.68 → 2.15 dB): el modelo hace más parejo el resultado entre
+  fotos.
+
+### 2.3 Por tipo de degradación (PSNR medio en test, dB)
+
+| Degradación | n | Entrada | Mediana 3×3 | Solo L1 | Pix2Pix |
+|---|---|---|---|---|---|
+| Desvanecido (fade) | 25 | 19.16 | 19.02 | 20.58 | 20.55 |
+| Contraste | 19 | 19.47 | 18.97 | 20.90 | 20.43 |
+| Ruido | 20 | 19.92 | 20.12 | 20.84 | 20.42 |
+| Desenfoque | 25 | 19.96 | 20.03 | 20.62 | 20.40 |
+| Baja resolución | 15 | 19.10 | 19.51 | 19.98 | 19.94 |
+| JPEG | 26 | 20.09 | 19.99 | 20.45 | 20.52 |
+| Polvo | 19 | 20.39 | 19.96 | 20.82 | 20.52 |
+| Rayones | 6 | 19.40 | 19.89 | 21.46 | 21.20 |
+
+Un par puede tener varias degradaciones, así que los grupos se solapan. Fuente:
+`docs/resultados/test/per_image.csv`. Las mayores ganancias están en **color y contraste**
+(+1.4 dB en desvanecido); las menores, en **baja resolución** (+0.8 dB): el modelo no puede
+recuperar detalle que no existe. Los rayones tienen solo 6 pares.
+
+### 2.4 Figuras
+
+![Resultados en test](img/results_grid.png)
+
+Primeras cuatro imágenes de test en orden alfabético: el modelo recupera saturación y contraste
+(champiñón) y quita parte del polvo, pero no devuelve la nitidez perdida por desenfoque.
+
+![Peores casos](img/failures.png)
+
+Los tres peores casos son las tres variantes de una misma fuente (`0898`, flores sobre cielo
+azul): el ruido fuerte sobre una zona lisa deja una textura granulada y artefactos en cuadrícula,
+y en `0898_v0` el desvanecido extremo no permite recuperar el azul del cielo.
+
+## 3. Corrida de 45 épocas y ablación de Cristian Muñoz (validación)
 
 Cristian entrenó en Colab (GPU T4, último `main`, `datasetv1.zip`) la base Pix2Pix y la ablación
 sin GAN. Cifras **reportadas por él**, pendientes de sumar sus `metrics.csv` al repositorio:
@@ -111,10 +173,12 @@ intento con el notebook original falló porque el zip del dataset no estaba en l
 la corrida de Cristian de la tabla anterior sí se completó. Para repetirla:
 `notebooks/pix2pix_colab.ipynb`, sección 3 (`ENTRENAR_ABLACION = True`).
 
-## 4. Qué queda por correr
+## 4. Fotos antiguas reales y demo
 
-| Paso | Comando o notebook | Resultado |
-|---|---|---|
-| Evaluar el test | `notebooks/pix2pix_colab.ipynb` (sección 5) | `summary.csv`, tabla, `results_grid.png`, `failures.png` |
-| Subir los pesos de Cristian | `Redes-Pix2Pix/checkpoints/{base,ablation}/` | filas Pix2Pix y U-Net solo L1 de la tabla |
-| Captura de la demo | `python -m app.server --checkpoint …` | `docs/img/app.png` |
+- Las 12 fotos de `real.zip` se restauran con
+  `python scripts/restore_folder.py --checkpoint outputs/base/checkpoints --input data/real`.
+  No tienen versión limpia (sin métricas) y su licencia no está verificada, así que la
+  comparación solo va en el informe entregado, no en el repositorio. Visualmente: el modelo
+  sube contraste y atenúa grietas finas, pero no rellena roturas, manchas ni partes faltantes,
+  que no están entre las 8 degradaciones del entrenamiento.
+- Demo: `docs/img/app.png` (`python -m app.server --checkpoint outputs/base/checkpoints`).
