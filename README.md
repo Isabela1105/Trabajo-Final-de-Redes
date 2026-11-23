@@ -305,7 +305,8 @@ con `--fid`. Atajos: `make eval`, `make results`, `make demo`.
 ├── guias/                        # guía individual por integrante
 ├── notebooks/                    # Colab: entrenamiento, ablación, evaluación y demo
 ├── report/
-│   ├── informe.md
+│   ├── Trabajo_Final_Redes.docx  # informe final (Word) y su PDF
+│   ├── informe.md · informe.pdf  # informe técnico del repositorio
 │   └── referencias.bib
 ├── scripts/
 │   ├── build_dataset.py · check_dataset.py · dataset_report.py · prepare_real.py
@@ -455,7 +456,9 @@ Configuración y solución de problemas: [`docs/CI_CD.md`](docs/CI_CD.md).
 
 ## 14. Informe y sustentación
 
-- Informe: [`report/informe.md`](report/informe.md) → PDF en `report/informe.pdf`.
+- **Informe final (Word):** [`report/Trabajo_Final_Redes.docx`](report/Trabajo_Final_Redes.docx) · [PDF](report/Trabajo_Final_Redes.pdf).
+  Versión pública: sin las 12 fotos antiguas reales, que tienen licencia sin verificar.
+- Informe técnico del repositorio: [`report/informe.md`](report/informe.md) → [`report/informe.pdf`](report/informe.pdf).
 - Estructura y responsables: [`docs/INFORME.md`](docs/INFORME.md).
 - Guion de defensa y 24 preguntas: [`docs/DEFENSA.md`](docs/DEFENSA.md).
 
@@ -495,7 +498,8 @@ git shortlog -sne origin/main
 - [x] Demo web (FastAPI) + respaldo Gradio.
 - [x] Tabla del test generada con líneas base, Pix2Pix y ablación (`docs/RESULTADOS.md`).
 - [x] Ablación sin GAN entrenada y evaluada.
-- [x] Informe (`report/informe.md` y PDF) y tag `v1.0.0` con release y pesos del generador.
+- [x] Informe final en Word y PDF (`report/Trabajo_Final_Redes.*`) e informe técnico (`report/informe.*`).
+- [ ] Tag `v1.0.0` con release y pesos del generador (lo crea la dueña del repositorio).
 - [ ] Dos ensayos de defensa con presentador aleatorio.
 
 ---
