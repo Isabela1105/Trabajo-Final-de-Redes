@@ -25,7 +25,7 @@ desde la cuenta `@Juansec01` el 22 de noviembre.
 | Juan Pablo Dávila Moncayo | @Juanpablodavila | Generador U-Net | — | 0 | Sin commits ni PRs en el repositorio. El generador lo implementó Jeremy (#18). |
 | Jeremy Santiago Caicedo Cabezas | @JeremyCaicedo | Discriminador y pérdidas | #18, #21 | 3 | Bloques y generador U-Net (#18), discriminador PatchGAN y pérdidas (#21, issue #20), ajuste directo en `losses.py`. |
 | Cristian Fabian Muñoz Piedrahita | @CristianMP355 | Entrenamiento | #25, #26, #27, #28, #29 | 5 | Bucle D→G, smoke test, integración real, métricas y ablación, checkpoints atómicos para Colab. |
-| Juan Sebastian Castillo Acevedo | @Juansec01 | Evaluación, inferencia y demo | (andamiaje inicial, commit directo) | 2 | Estructura inicial del repo (CI, plantillas, docs, configs, guías) + PRs de cierre de la sección 3. |
+| Juan Sebastian Castillo Acevedo | @Juansec01 | Evaluación, inferencia y demo | #30–#36 (abiertos) + andamiaje inicial | 2 | Estructura inicial del repo (CI, plantillas, docs, configs, guías) + PRs de cierre de la sección 3. |
 | Isabela Cabezas Obregón | @Isabela1105 | CI/CD, integración e informe | #14 | 1 | `.gitattributes` para las estadísticas de lenguajes. Dueña del repositorio. |
 
 ## 2. Detalle por integrante
@@ -85,17 +85,17 @@ desde la cuenta `@Juansec01` el 22 de noviembre.
 - **Commits directos iniciales:** `98000b4` `chore: inicializar repositorio…` (43 archivos:
   CI, release, plantillas, CODEOWNERS, `pyproject.toml`, configs, docs y guías; corresponde
   al PR-F1 del plan) y `a82995c` (datos de Isabela en el README).
-- **PRs de cierre** (ramas abiertas desde `@Juansec01`; el número lo asigna GitHub):
+- **PRs de cierre** #30–#36 (abiertos desde `@Juansec01`, apilados; se mergean en orden):
 
-| Rama | Commits | Qué entrega |
+| PR · rama | Commits | Qué entrega |
 |---|---|---|
-| [`feat/16-metrics-inference`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Afeat%2F16-metrics-inference) | 3 | PSNR/SSIM/L1 en [0, 1] por imagen (`src/gan/metrics.py`), inferencia desde checkpoint (`src/gan/infer.py`), tests. |
-| [`docs/17-baselines`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Adocs%2F17-baselines) | 1 | Protocolo, métricas, líneas base y plantilla de tabla (`docs/ARQUITECTURA.md` §6). |
-| [`feat/26-eval-app`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Afeat%2F26-eval-app) | 5 | Evaluación del test con baselines y CSVs, grids, demo FastAPI + `web/`, Gradio de respaldo, tests. |
-| [`feat/33-results-app`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Afeat%2F33-results-app) | 4 | FID opcional, selector de ejemplos, `scripts/results_table.py`, `docs/DEMO.md`. |
-| [`fix/37-app-formats`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Afix%2F37-app-formats) | 3 | Fotos de 12 MP, alfa, EXIF, modos raros, relleno sin deformar; curvas reales y `docs/RESULTADOS.md`; notebooks de Colab. |
-| [`test/41-synthetic-sample`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Atest%2F41-synthetic-sample) | 1 | `scripts/make_synthetic_sample.py` (PR-F3 pendiente): el CI deja de saltarse el smoke training. |
-| [`docs/43-cierre-participacion`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Adocs%2F43-cierre-participacion) | 9 | README, participación, equipo, informe y referencias alineados con el trabajo real; notebooks de Colab unificados; `docs/GUIA_PRUEBAS.md`. |
+| [#30](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pull/30) `feat/16-metrics-inference` | 3 | PSNR/SSIM/L1 en [0, 1] por imagen (`src/gan/metrics.py`), inferencia desde checkpoint (`src/gan/infer.py`), tests. |
+| [#31](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pull/31) `docs/17-baselines` | 1 | Protocolo, métricas, líneas base y plantilla de tabla (`docs/ARQUITECTURA.md` §6). |
+| [#32](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pull/32) `feat/26-eval-app` | 5 | Evaluación del test con baselines y CSVs, grids, demo FastAPI + `web/`, Gradio de respaldo, tests. |
+| [#33](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pull/33) `feat/33-results-app` | 4 | FID opcional, selector de ejemplos, `scripts/results_table.py`, `docs/DEMO.md`. |
+| [#34](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pull/34) `fix/37-app-formats` | 3 | Fotos de 12 MP, alfa, EXIF, modos raros, relleno sin deformar; curvas reales y `docs/RESULTADOS.md`; notebooks de Colab. |
+| [#35](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pull/35) `test/41-synthetic-sample` | 1 | `scripts/make_synthetic_sample.py` (PR-F3 pendiente): el CI deja de saltarse el smoke training. |
+| [#36](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pull/36) `docs/43-cierre-participacion` | 9 | README, participación, equipo, informe y referencias alineados con el trabajo real; notebooks de Colab unificados; `docs/GUIA_PRUEBAS.md`. |
 
 - **Informe y defensa:** §6 Experimentos y resultados, §7 Demo.
 

@@ -322,7 +322,7 @@ existieron de verdad:
 | Juan Pablo (@Juanpablodavila) | ninguna todavía |
 | Jeremy (@JeremyCaicedo) | `feat/generator-unet`, `feat/discriminator-losses`, `Jeremycaicedo-patch-1` (#18, #21, #22) |
 | Cristian (@CristianMP355) | PRs #25–#29 (squash merge) |
-| Juan Sebastian (@Juansec01) | `feat/16-metrics-inference`, `docs/17-baselines`, `feat/26-eval-app`, `feat/33-results-app`, `fix/37-app-formats`, `test/41-synthetic-sample`, `docs/43-cierre-participacion` |
+| Juan Sebastian (@Juansec01) | PRs #30–#36: `feat/16-metrics-inference`, `docs/17-baselines`, `feat/26-eval-app`, `feat/33-results-app`, `fix/37-app-formats`, `test/41-synthetic-sample`, `docs/43-cierre-participacion` |
 | Isabela (@Isabela1105) | PR #14 |
 
 ### 11.3 Commits
@@ -444,7 +444,7 @@ Resumen del historial de `main` (detalle, enlaces y pendientes en
 | Juan Pablo Dávila | 0 | Sin commits a la fecha | Generador (asignado) |
 | Jeremy Caicedo | 2 (#18, #21) + 1 commit directo | Generador U-Net, PatchGAN y pérdidas | Marco teórico, arquitectura |
 | Cristian Muñoz | 5 (#25–#29) | Entrenamiento, checkpoints, ablación | Entrenamiento |
-| Juan Sebastian Castillo | andamiaje inicial + 7 PRs de cierre | Repo base, evaluación, inferencia, demo, CI smoke, docs de cierre | Resultados, demo |
+| Juan Sebastian Castillo | andamiaje inicial + 7 PRs de cierre (#30–#36) | Repo base, evaluación, inferencia, demo, CI smoke, docs de cierre | Resultados, demo |
 | Isabela Cabezas | 1 (#14) | `.gitattributes`; dueña del repo y del release | Intro, conclusiones |
 
 ```bash
