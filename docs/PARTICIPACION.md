@@ -76,8 +76,8 @@ desde la cuenta `@Juansec01` el 22 de noviembre.
 - **Módulos:** `src/gan/train.py`, `src/gan/config.py`, `src/gan/utils/viz.py` (muestras y
   TensorBoard), `configs/`, `tests/test_smoke_train.py`, `tests/test_train_integration.py`,
   `docs/ARQUITECTURA.md` §5.
-- **Colab:** el notebook `notebooks/pix2pix_base_y_ablacion_colab.ipynb` empaqueta sus salidas
-  como `resultados_pix2pix_cristian.zip`.
+- **Colab:** el notebook original de base + ablación (empaquetaba sus salidas como
+  `resultados_pix2pix_cristian.zip`) se unificó en `notebooks/pix2pix_colab.ipynb`.
 - **Informe y defensa:** §5 Entrenamiento.
 
 ### Juan Sebastian Castillo Acevedo (@Juansec01) · código 2231921
@@ -95,7 +95,7 @@ desde la cuenta `@Juansec01` el 22 de noviembre.
 | [`feat/33-results-app`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Afeat%2F33-results-app) | 4 | FID opcional, selector de ejemplos, `scripts/results_table.py`, `docs/DEMO.md`. |
 | [`fix/37-app-formats`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Afix%2F37-app-formats) | 3 | Fotos de 12 MP, alfa, EXIF, modos raros, relleno sin deformar; curvas reales y `docs/RESULTADOS.md`; notebooks de Colab. |
 | [`test/41-synthetic-sample`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Atest%2F41-synthetic-sample) | 1 | `scripts/make_synthetic_sample.py` (PR-F3 pendiente): el CI deja de saltarse el smoke training. |
-| [`docs/43-cierre-participacion`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Adocs%2F43-cierre-participacion) | 7 | README, participación, equipo, informe y referencias alineados con el trabajo real; notebooks de Colab corregidos; `docs/GUIA_PRUEBAS.md`. |
+| [`docs/43-cierre-participacion`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Adocs%2F43-cierre-participacion) | 9 | README, participación, equipo, informe y referencias alineados con el trabajo real; notebooks de Colab unificados; `docs/GUIA_PRUEBAS.md`. |
 
 - **Informe y defensa:** §6 Experimentos y resultados, §7 Demo.
 
@@ -113,8 +113,7 @@ desde la cuenta `@Juansec01` el 22 de noviembre.
 | Notebook | Estado | Resultado |
 |---|---|---|
 | `notebooks/pix2pix_entrenamiento_colab.ipynb` | ejecutado | 20 épocas en GPU, 522 s; val L1 0.1482, PSNR 20.26 dB, SSIM 0.5077 (`docs/RESULTADOS.md`). |
-| `notebooks/pix2pix_base_y_ablacion_colab.ipynb` | falló en la celda 1 (ruta del zip); corregido | pendiente de volver a correr para la ablación. |
-| `notebooks/evaluacion_y_demo_colab.ipynb` | nuevo | evalúa el test y genera tabla y figuras finales. |
+| `notebooks/pix2pix_colab.ipynb` | unifica el de base + ablación (falló en la celda 1) con el de métricas, más evaluación y demo | pendiente de correr la evaluación del test y la ablación. |
 
 Los checkpoints, `metrics.csv`, logs y muestras están en la carpeta de Drive del equipo
 (`archivos_deep_learning` y `pix2pix_outputs/metricas_loss_existente`), no en git.

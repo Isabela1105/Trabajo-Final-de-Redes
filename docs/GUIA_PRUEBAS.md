@@ -76,8 +76,8 @@ Qué revisar en el resultado:
 - `failures.png` muestra los peores casos; úsalos en la defensa para hablar de limitaciones.
 - `by_degradation.csv` dice qué daño corrige mejor y peor.
 
-Si no tienes el entorno local, `notebooks/evaluacion_y_demo_colab.ipynb` hace estos pasos en
-Colab y te descarga los archivos para subirlos.
+Si no tienes el entorno local, la sección 5 de `notebooks/pix2pix_colab.ipynb` hace estos pasos
+en Colab y te descarga los archivos para subirlos.
 
 ## Nivel 4 — Casos difíciles para la demo
 
@@ -92,12 +92,13 @@ Colab y te descarga los archivos para subirlos.
 
 ## Entrenar de nuevo o correr la ablación (Colab, GPU)
 
-`notebooks/pix2pix_base_y_ablacion_colab.ipynb`:
+`notebooks/pix2pix_colab.ipynb`:
 
 1. Sube `datasetv1.zip` a `MyDrive/Redes-Pix2Pix/` (o a `/content`).
 2. *Entorno de ejecución → Cambiar tipo → GPU*.
-3. Ejecuta las celdas 1–2 (preparación), 3 (base) y/o 4 (ablación). Las salidas van a Drive.
-4. Si Colab se desconecta: pon `RESUME = True` (o `RESUME_ABL = True`) y vuelve a ejecutar la
-   celda; continúa desde el último checkpoint.
-5. Luego evalúa con `--model "U-Net solo L1=<ruta>/ablation/checkpoints"` para la fila de la
-   ablación.
+3. En la sección 0 elige qué correr: `ENTRENAR_BASE`, `ENTRENAR_ABLACION`, `EPOCAS_BASE`.
+   Con todo en `False` solo evalúa el checkpoint que ya existe (`CKPT_EXISTENTE`).
+4. *Entorno de ejecución → Ejecutar todas*. Las salidas van a `Redes-Pix2Pix/resultados_pix2pix/`.
+5. Si Colab se desconecta: `RESUME = True` y vuelve a ejecutar la sección 2 o 3.
+6. La sección 5 evalúa base y ablación juntas y actualiza tabla y figuras; la 7 descarga un zip
+   cuya carpeta `repo/` tiene los archivos listos para subir.

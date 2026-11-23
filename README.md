@@ -113,7 +113,7 @@ a mano. Líneas base y protocolo: [`docs/ARQUITECTURA.md` §6](docs/ARQUITECTURA
 
 <!-- RESULTADOS:INICIO -->
 _Pendiente de ejecutar `src/gan/evaluate.py` sobre el split `test` con el checkpoint de la
-corrida base (`notebooks/evaluacion_y_demo_colab.ipynb`). Las cifras de validación de 4.1 no
+corrida base (`notebooks/pix2pix_colab.ipynb`, sección 5). Las cifras de validación de 4.1 no
 reemplazan esta tabla._
 <!-- RESULTADOS:FIN -->
 
@@ -462,8 +462,8 @@ git shortlog -sne origin/main
 - [x] Entrenamiento real en Colab con checkpoint en Drive (20 épocas).
 - [x] Métricas PSNR/SSIM/L1 + baselines implementadas y probadas.
 - [x] Demo web (FastAPI) + respaldo Gradio.
-- [ ] Tabla del test generada (`notebooks/evaluacion_y_demo_colab.ipynb`).
-- [ ] Ablación sin GAN entrenada (`notebooks/pix2pix_base_y_ablacion_colab.ipynb`).
+- [ ] Tabla del test generada (`notebooks/pix2pix_colab.ipynb`, sección 5).
+- [ ] Ablación sin GAN entrenada (`notebooks/pix2pix_colab.ipynb`, sección 3).
 - [ ] Informe PDF desde `report/informe.md` y tag `v1.0.0` con release.
 - [ ] Dos ensayos de defensa con presentador aleatorio.
 

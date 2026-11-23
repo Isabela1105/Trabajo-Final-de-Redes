@@ -234,7 +234,7 @@ pytest tests/test_app.py -q
 - [x] `infer.py` que funciona con una imagen nueva.
 - [x] `app/server.py` + `web/` con ejemplos; Gradio de respaldo.
 - [x] `tests/test_metrics.py` y `tests/test_app.py` verdes.
-- [ ] `docs/img/results_grid.png`, `failures.png`, `app.png` (correr `notebooks/evaluacion_y_demo_colab.ipynb`).
+- [ ] `docs/img/results_grid.png`, `failures.png`, `app.png` (correr `notebooks/pix2pix_colab.ipynb`).
 - [ ] Tabla de resultados con baselines (código listo; falta correrlo con el checkpoint).
 - [x] Documentación de despliegue (`docs/DEMO.md`).
 - [ ] 15 commits y 6 PRs.

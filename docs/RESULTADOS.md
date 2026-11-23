@@ -66,7 +66,7 @@ python scripts/results_table.py --summary outputs/base/eval/summary.csv \
 cp outputs/base/eval/results_grid.png outputs/base/eval/failures.png docs/img/
 ```
 
-El notebook `notebooks/evaluacion_y_demo_colab.ipynb` hace estos pasos en Colab leyendo el
+La sección 5 de `notebooks/pix2pix_colab.ipynb` hace estos pasos en Colab leyendo el
 checkpoint desde Drive.
 
 <!-- RESULTADOS:INICIO -->
@@ -77,16 +77,16 @@ corrida base. Las cifras de validación de la sección 1 no reemplazan esta tabl
 ## 3. Ablación sin GAN (U-Net solo L1)
 
 `configs/ablation_l1.yaml` + `train.use_gan: false` + `λ = 1000` ya está implementado y probado
-(`tests/test_train_integration.py::test_real_ablation_only_trains_generator`). En el
-notebook `notebooks/pix2pix_base_y_ablacion_colab.ipynb` la celda 1 falló porque el zip del
-dataset no estaba en la ruta esperada de Drive (`Redes-Pix2Pix/datasetv1.zip`), así que la
-ablación **todavía no tiene corrida real**. El notebook quedó corregido para buscar el zip en
-las dos rutas usadas por el equipo.
+(`tests/test_train_integration.py::test_real_ablation_only_trains_generator`). El notebook
+original de base + ablación falló en su primera celda porque el zip del dataset no estaba en
+la ruta esperada de Drive (`Redes-Pix2Pix/datasetv1.zip`), así que la ablación **todavía no
+tiene corrida real**. Ese notebook se unificó en `notebooks/pix2pix_colab.ipynb`, que busca el
+zip en las rutas usadas por el equipo (sección 3: `ENTRENAR_ABLACION = True`).
 
 ## 4. Qué queda por correr
 
 | Paso | Comando o notebook | Resultado |
 |---|---|---|
-| Evaluar el test | `notebooks/evaluacion_y_demo_colab.ipynb` | `summary.csv`, tabla, `results_grid.png`, `failures.png` |
-| Ablación | `notebooks/pix2pix_base_y_ablacion_colab.ipynb` (celda 4) | fila "U-Net solo L1" de la tabla |
+| Evaluar el test | `notebooks/pix2pix_colab.ipynb` (sección 5) | `summary.csv`, tabla, `results_grid.png`, `failures.png` |
+| Ablación | `notebooks/pix2pix_colab.ipynb` (sección 3) | fila "U-Net solo L1" de la tabla |
 | Captura de la demo | `python -m app.server --checkpoint …` | `docs/img/app.png` |

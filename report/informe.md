@@ -259,7 +259,7 @@ orden alfabético y las 4 de menor PSNR, sin selección manual.
 
 <!-- RESULTADOS:INICIO -->
 _Pendiente de ejecutar `src/gan/evaluate.py` sobre el split `test` con el checkpoint de la
-corrida base (`notebooks/evaluacion_y_demo_colab.ipynb`). Las cifras de validación de la
+corrida base (`notebooks/pix2pix_colab.ipynb`). Las cifras de validación de la
 sección 5.5 no reemplazan esta tabla._
 <!-- RESULTADOS:FIN -->
 
