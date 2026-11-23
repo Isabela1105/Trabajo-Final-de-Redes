@@ -22,6 +22,14 @@
 | Semilla base | 42 |
 | Fotos reales | 12 |
 
+## Descarga
+
+El dataset procesado (`datasetv1.zip`) y las evidencias de entrenamiento están en el
+[Drive del equipo](https://drive.google.com/drive/folders/1abHjMBx08ZmipD9nWkRBtTMhxPD4bYxq). Las imágenes no se suben a git (pesan cientos de MB y una parte tiene
+licencia de solo uso académico); este directorio guarda lo necesario para reconstruirlo:
+`manifest.csv` (semilla y degradaciones por par) y `sources.csv` (autor, licencia y enlace de
+cada foto fuente).
+
 ## Procedencia
 
 | Origen | Fuentes | Licencia | Detalle |

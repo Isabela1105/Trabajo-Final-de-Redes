@@ -22,7 +22,7 @@ pares `(input, target)` con un pipeline de degradaciones reproducible. La foto l
 
 - Código comentado y reproducible en TensorFlow/Keras.
 - Dataset propio documentado (ficha, manifiesto, splits, ética).
-- Modelo entrenado en Colab (checkpoint en el Drive del equipo, no en git).
+- Modelo entrenado en Colab: checkpoint, `metrics.csv` y muestras en el [Drive del equipo](https://drive.google.com/drive/folders/1abHjMBx08ZmipD9nWkRBtTMhxPD4bYxq).
 - Evaluación con PSNR, SSIM y L1 + comparación con baselines.
 - Demo web (FastAPI + HTML/CSS/JS) para restaurar una imagen; Gradio como respaldo.
 - Informe en PDF y material de sustentación.
@@ -178,7 +178,15 @@ Si esto funciona, el pipeline está sano. El entrenamiento real va en Colab/Kagg
 
 ## 7. Dataset
 
-El dataset no se versiona en git. Para reconstruirlo:
+**Descarga:** [`datasetv1.zip` y evidencias de entrenamiento en Drive](https://drive.google.com/drive/folders/1abHjMBx08ZmipD9nWkRBtTMhxPD4bYxq) (456 pares PNG
+256×256: `processed/{train,val,test}/{input,target}`). En el repositorio quedan la ficha, el
+manifiesto con la semilla de cada par (`data/manifest.csv`) y las fuentes
+(`data/sources.csv`), con lo que el dataset se reconstruye idéntico.
+
+Para usarlo: descomprimir `datasetv1.zip` en la raíz del repo (queda `data/processed/`), o
+abrir `notebooks/pix2pix_colab.ipynb`, que lo busca en Drive y lo extrae solo.
+
+Para reconstruirlo desde las fotos originales:
 
 ```bash
 # 1. Colocar fotos originales en data/raw/
