@@ -24,11 +24,19 @@
 
 ## Descarga
 
-El dataset procesado (`datasetv1.zip`) y las evidencias de entrenamiento están en el
-[Drive del equipo](https://drive.google.com/drive/folders/1abHjMBx08ZmipD9nWkRBtTMhxPD4bYxq). Las imágenes no se suben a git (pesan cientos de MB y una parte tiene
-licencia de solo uso académico); este directorio guarda lo necesario para reconstruirlo:
+Carpeta de Drive del equipo (solo integrantes y docente): https://drive.google.com/drive/folders/1SADEgsZbRjcOhBGSgQsxNNcRtu3O-JIP
+
+| Archivo | Contenido |
+|---|---|
+| `datasetv1.zip` | 456 pares (366 / 45 / 45). Se descomprime dentro de `data/` → `data/processed/`. |
+| `real.zip` | 12 fotos antiguas reales, solo para inspección visual. |
+| *Avance del trabajo de datos y dataset* (PDF) | Qué se hizo, cómo usarlo y limitaciones. |
+| `checkpoints/` | Pesos del entrenamiento en Colab. |
+
+No se publica ni se sube a git porque DIV2K es de solo uso académico y las fotos de Pinterest
+tienen licencia sin verificar. Este directorio guarda lo necesario para reconstruirlo:
 `manifest.csv` (semilla y degradaciones por par) y `sources.csv` (autor, licencia y enlace de
-cada foto fuente).
+cada foto fuente). Evidencias de entrenamiento: https://drive.google.com/drive/folders/1abHjMBx08ZmipD9nWkRBtTMhxPD4bYxq
 
 ## Procedencia
 

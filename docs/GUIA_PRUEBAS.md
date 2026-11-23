@@ -94,7 +94,7 @@ en Colab y te descarga los archivos para subirlos.
 
 `notebooks/pix2pix_colab.ipynb`:
 
-1. Sube `datasetv1.zip` a `MyDrive/Redes-Pix2Pix/` (o a `/content`).
+1. Agrega a "Mi unidad" un acceso directo a la carpeta del equipo (tiene `datasetv1.zip`), o sube el zip a `MyDrive/Redes-Pix2Pix/`.
 2. *Entorno de ejecución → Cambiar tipo → GPU*.
 3. En la sección 0 elige qué correr: `ENTRENAR_BASE`, `ENTRENAR_ABLACION`, `EPOCAS_BASE`.
    Con todo en `False` solo evalúa el checkpoint que ya existe (`CKPT_EXISTENTE`).
