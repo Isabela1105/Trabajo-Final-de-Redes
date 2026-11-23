@@ -19,8 +19,8 @@
 /docs/DATASET.md             @Isabellaortizher-collab
 
 # ── Generador ────────────────────────────────────────────────────
-/src/gan/models/blocks.py      @Juanpablodavila
-/src/gan/models/generator.py   @Juanpablodavila
+/src/gan/models/blocks.py      @Juanpablodavila @JeremyCaicedo
+/src/gan/models/generator.py   @Juanpablodavila @JeremyCaicedo
 
 # ── Discriminador y pérdidas ─────────────────────────────────────
 /src/gan/models/discriminator.py @JeremyCaicedo
@@ -33,10 +33,16 @@
 /src/gan/utils/              @CristianMP355 @Juansec01
 
 # ── Evaluación, inferencia y demo ────────────────────────────────
+/src/gan/metrics.py          @Juansec01
 /src/gan/evaluate.py         @Juansec01
 /src/gan/infer.py            @Juansec01
 /app/                        @Juansec01
+/web/                        @Juansec01
+/scripts/results_table.py    @Juansec01
+/notebooks/                  @Juansec01 @CristianMP355
 /docs/img/                   @Juansec01
+/docs/RESULTADOS.md          @Juansec01
+/docs/DEMO.md                @Juansec01
 
 # ── CI/CD y plantillas ───────────────────────────────────────────
 /.github/                    @Isabela1105
