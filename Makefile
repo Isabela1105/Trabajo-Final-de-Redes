@@ -1,7 +1,7 @@
 # Atajos de desarrollo. En Windows, si no hay `make`, ejecutar los comandos a mano.
 PYTHON ?= python
 
-.PHONY: install test lint format smoke train eval report report-docx clean participation
+.PHONY: install test lint format smoke train eval results curves demo report report-docx clean participation
 
 install:
 	$(PYTHON) -m pip install --upgrade pip
@@ -26,8 +26,22 @@ smoke:
 train:
 	$(PYTHON) -m src.gan.train --config configs/base.yaml
 
+CHECKPOINT ?= outputs/base/checkpoints
+
 eval:
-	$(PYTHON) -m src.gan.evaluate --config configs/base.yaml --split test
+	$(PYTHON) -m src.gan.evaluate --config configs/base.yaml --checkpoint $(CHECKPOINT) --split test
+
+results:
+	$(PYTHON) scripts/results_table.py --summary outputs/base/eval/summary.csv \
+		--update README.md report/informe.md docs/RESULTADOS.md
+	cp outputs/base/eval/results_grid.png outputs/base/eval/failures.png docs/img/
+
+curves:
+	$(PYTHON) scripts/plot_training_log.py docs/resultados/colab_base_20ep_log.csv \
+		docs/img/curvas_entrenamiento.png
+
+demo:
+	$(PYTHON) -m app.server --checkpoint $(CHECKPOINT)
 
 report:
 	cd report && pandoc informe.md \

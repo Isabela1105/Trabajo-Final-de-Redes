@@ -56,7 +56,17 @@ Prueba rápida sin navegador:
 curl -F "file=@foto.jpg" http://127.0.0.1:8000/api/restore -o restaurada.png
 ```
 
-## 4. Ejecutar en Colab (plan B)
+## 4. Qué pasa con la imagen
+
+1. Se corrige la orientación EXIF y la transparencia se compone sobre blanco.
+2. Si mide más de 4096 px de lado, se reduce antes de procesar (protege la memoria).
+3. Se rellena por reflexión hasta quedar cuadrada, se lleva a 256×256 y se normaliza a `[-1, 1]`.
+4. El generador predice; la salida se desnormaliza, se recorta el relleno y vuelve al tamaño
+   de entrada (acotado).
+
+Así una foto vertical de celular no sale estirada ni rotada.
+
+## 5. Ejecutar en Colab (plan B)
 
 ```python
 !git clone https://github.com/Isabela1105/Trabajo-Final-de-Redes.git
@@ -66,12 +76,12 @@ curl -F "file=@foto.jpg" http://127.0.0.1:8000/api/restore -o restaurada.png
 !python -m app.gradio_app --checkpoint /content/drive/MyDrive/<ruta>/checkpoints
 ```
 
-## 5. Plan C
+## 6. Plan C
 
 Si no hay ni portátil ni Colab: la galería precalculada `docs/img/results_grid.png` y
 `docs/img/failures.png` en las diapositivas, más un video corto de la demo grabado antes.
 
-## 6. Limitaciones
+## 7. Limitaciones
 
 - El modelo trabaja a 256×256: en fotos grandes la salida se ve más suave que la original.
 - Puede **inventar** detalles (caras, texto) que no existían; no sirve como prueba documental.

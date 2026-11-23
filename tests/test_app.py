@@ -76,3 +76,13 @@ def test_examples_are_listed_and_served(trained_checkpoint: Path, tmp_path: Path
     assert [i["name"] for i in items] == ["foto_001_v0.png"]
     assert client.get(items[0]["url"]).status_code == 200
     assert client.get("/api/examples/..%2Fnotas.txt").status_code == 404
+
+
+def test_restore_large_jpeg_and_rgba(client: TestClient) -> None:
+    buffer = io.BytesIO()
+    Image.new("RGB", (4000, 3000), (80, 90, 100)).save(buffer, format="JPEG")
+    res = client.post("/api/restore", files={"file": ("big.jpg", buffer.getvalue(), "image/jpeg")})
+    assert res.status_code == 200
+    assert max(Image.open(io.BytesIO(res.content)).size) <= 4096
+    res = client.post("/api/restore", files={"file": ("a.png", _png(mode="RGBA"), "image/png")})
+    assert res.status_code == 200

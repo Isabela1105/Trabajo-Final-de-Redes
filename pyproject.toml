@@ -9,6 +9,7 @@ extend-exclude = '''
     \.venv
   | data
   | outputs
+  | notebooks
   | \.ipynb_checkpoints
 )/
 '''
@@ -16,7 +17,8 @@ extend-exclude = '''
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-exclude = [".venv", "data", "outputs", ".ipynb_checkpoints"]
+# notebooks/: scripts de Colab con comandos `!`/`%` y la evidencia ejecutada tal cual.
+exclude = [".venv", "data", "outputs", "notebooks", ".ipynb_checkpoints"]
 
 [tool.ruff.lint]
 # E/F: errores y pyflakes; I: imports; B: bugs; UP: upgrades; SIM: simplificaciones.
