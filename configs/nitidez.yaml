@@ -1,0 +1,45 @@
+# Experimento de nitidez (posterior a la entrega v1.0.0; no la modifica).
+# Autor: Juan Sebastian Castillo Acevedo (@Juansec01)
+#
+# Igual que base.yaml salvo lo marcado con (*):
+#   (*) losses_module: L1 + adversarial + perceptual VGG16 (src/gan/losses_nitidez.py)
+#   (*) lambda_l1 100 -> 50: menos peso al "promedio" que deja la imagen borrosa
+#   (*) label_smoothing 0.1 y lr_d a la mitad: el discriminador no domina desde la época 2
+#   (*) salida en outputs/nitidez para no pisar outputs/base
+# Se entrena en Colab con GPU (notebooks/pix2pix_colab.ipynb, EXPERIMENTO_NITIDEZ = True).
+seed: 42
+data:
+  train_dir: data/processed/train
+  val_dir: data/processed/val
+  test_dir: data/processed/test
+  image_size: 256
+  batch_size: 2
+  num_parallel_calls: 4
+model:
+  ngf: 64
+  ndf: 64
+  n_downsample: 8
+  dropout: 0.5
+  norm: instance
+  generator_builder: src.gan.models.generator:build_generator
+  discriminator_builder: src.gan.models.discriminator:build_discriminator
+  losses_module: src.gan.losses_nitidez # (*)
+train:
+  allow_smoke_fallback: false
+  max_to_keep: 3
+  epochs: 100
+  lr_g: 0.0002
+  lr_d: 0.0001 # (*)
+  beta_1: 0.5
+  beta_2: 0.999
+  lambda_l1: 50.0 # (*)
+  label_smoothing: 0.1 # (*) ahora sí se aplica: losses_nitidez lo acepta
+  mixed_precision: true
+  clip_norm: 1.0
+  sample_interval: 5
+  checkpoint_interval: 1
+  early_stopping_patience: 15
+  max_steps: null
+output:
+  dir: outputs/nitidez # (*)
+  save_samples: true

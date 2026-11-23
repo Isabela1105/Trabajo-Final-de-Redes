@@ -182,3 +182,9 @@ la corrida de Cristian de la tabla anterior sí se completó. Para repetirla:
   sube contraste y atenúa grietas finas, pero no rellena roturas, manchas ni partes faltantes,
   que no están entre las 8 degradaciones del entrenamiento.
 - Demo: `docs/img/app.png` (`python -m app.server --checkpoint outputs/base/checkpoints`).
+
+## 5. Siguiente paso: nitidez
+
+El modelo entregado deja la imagen suave. El experimento de `docs/EXPERIMENTO_NITIDEZ.md`
+(100 épocas, pérdida perceptual VGG16, λ_L1 = 50, label smoothing 0.1) ataca esa limitación
+sin modificar los resultados de esta página.

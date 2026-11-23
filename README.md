@@ -435,6 +435,7 @@ Configuración y solución de problemas: [`docs/CI_CD.md`](docs/CI_CD.md).
 | [`docs/PARTICIPACION.md`](docs/PARTICIPACION.md) | Evidencia de participación (desde el historial real). |
 | [`docs/RESULTADOS.md`](docs/RESULTADOS.md) | Curvas, validación, tabla del test y ablación. |
 | [`docs/DEMO.md`](docs/DEMO.md) | Ejecutar y desplegar la demo. |
+| [`docs/EXPERIMENTO_NITIDEZ.md`](docs/EXPERIMENTO_NITIDEZ.md) | Experimento posterior: pérdida perceptual VGG16 para recuperar nitidez. |
 | [`docs/GUIA_PRUEBAS.md`](docs/GUIA_PRUEBAS.md) | Cómo probar todo: tests, pipeline falso, modelo real y casos difíciles. |
 | [`docs/REFERENCIA_CODIGO.md`](docs/REFERENCIA_CODIGO.md) | Código comentado de referencia. |
 | [`docs/MERGE_Y_REVISION.md`](docs/MERGE_Y_REVISION.md) | Cómo integrar y revisar todo al final. |
