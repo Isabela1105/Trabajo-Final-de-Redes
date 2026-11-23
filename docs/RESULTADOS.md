@@ -33,6 +33,7 @@ detrás, no se publica.
 | 4 | 0.1581 | 19.71 | 0.4974 |
 | 16 (mejor L1) | 0.1443 | — | — |
 | 19 (última) | 0.1482 | 20.26 | 0.5077 |
+| *Referencia: entrada sin restaurar* | *0.1680* | *19.27* | *0.4606* |
 
 Las filas 0–4 y 19 son las que el notebook mostró completas; para las épocas 5–18 solo quedó
 impresa la L1 de validación (ver el CSV transcrito). El `metrics.csv` completo está en el Drive
@@ -44,8 +45,13 @@ del equipo (`pix2pix_outputs/metricas_loss_existente/metrics.csv`).
 
 ### 1.2 Lectura de las curvas
 
-- **El generador sí aprende:** `loss_g` baja de 23.8 a 12.8 y la L1 de validación de 0.197 a
-  0.148 (−25 %). El PSNR de validación sube 2.1 dB (18.15 → 20.26) y el SSIM 0.07.
+- **El generador sí aprende y supera a no hacer nada:** frente a la foto degradada sin
+  restaurar (misma convención de `train.py`, `docs/resultados/val_lineas_base_summary.csv`),
+  la época 19 mejora +0.99 dB de PSNR (19.27 → 20.26), +0.047 de SSIM (0.461 → 0.508) y −12 % de
+  L1 (0.168 → 0.148). En la época 0 el modelo estaba **por debajo** de la entrada (18.15 dB): las
+  primeras épocas solo aprenden a no empeorar la foto.
+- **La mejora es modesta:** ≈ 1 dB sobre la entrada. Con 20 épocas y D dominando, el margen
+  es pequeño; la corrida de 45 épocas de Cristian (sección 3) llega a 20.61 dB.
 - **El discriminador domina pronto:** desde la época 2 su pérdida queda por debajo de 0.04 y
   termina en ≈ 0. Significa que distingue casi perfectamente lo real de lo generado; el
   generador avanza sobre todo por el término L1. Es una limitación conocida de Pix2Pix con
@@ -71,23 +77,44 @@ La sección 5 de `notebooks/pix2pix_colab.ipynb` hace estos pasos en Colab leyen
 checkpoint desde Drive.
 
 <!-- RESULTADOS:INICIO -->
-_Pendiente de ejecutar `src/gan/evaluate.py` sobre el split `test` con el checkpoint de la
-corrida base. Las cifras de validación de la sección 1 no reemplazan esta tabla._
+| Modelo | n | PSNR (dB) ↑ | SSIM ↑ | L1 ↓ |
+|---|---|---|---|---|
+| Entrada (sin restaurar) | 45 | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
+| Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
+
+_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test_lineas_base_summary.csv`._
+
+_Filas de Pix2Pix y U-Net solo L1: pendientes del checkpoint de la corrida de Cristian (`Redes-Pix2Pix/checkpoints/`)._
 <!-- RESULTADOS:FIN -->
 
-## 3. Ablación sin GAN (U-Net solo L1)
+## 3. Corrida de 45 épocas y ablación (Cristian Muñoz)
+
+Cristian entrenó en Colab (GPU T4, último `main`, `datasetv1.zip`) la base Pix2Pix y la ablación
+sin GAN. Cifras **reportadas por él**, pendientes de sumar sus `metrics.csv` al repositorio:
+
+| Corrida | Épocas | PSNR val (dB) | SSIM val |
+|---|---|---|---|
+| Entrada sin restaurar (referencia) | — | 19.27 | 0.4606 |
+| Pix2Pix (GAN + L1, λ = 100) | 45 | 20.61 | 0.5164 |
+| U-Net solo L1 (λ = 1000, sin D) | 44 | 20.78 | 0.5397 |
+
+La ablación supera a Pix2Pix en PSNR y SSIM. Es esperable: ambas métricas premian la
+fidelidad píxel a píxel, que es justo lo que optimiza L1, mientras el término adversarial
+empuja a texturas plausibles que pueden alejarse del píxel exacto. La comparación visual
+(`results_grid.png`) es la que muestra si la GAN aporta nitidez.
+
+### 3.1 Implementación de la ablación
 
 `configs/ablation_l1.yaml` + `train.use_gan: false` + `λ = 1000` ya está implementado y probado
-(`tests/test_train_integration.py::test_real_ablation_only_trains_generator`). El notebook
-original de base + ablación falló en su primera celda porque el zip del dataset no estaba en
-la ruta esperada de Drive (`Redes-Pix2Pix/datasetv1.zip`), así que la ablación **todavía no
-tiene corrida real**. Ese notebook se unificó en `notebooks/pix2pix_colab.ipynb`, que busca el
-zip en las rutas usadas por el equipo (sección 3: `ENTRENAR_ABLACION = True`).
+(`tests/test_train_integration.py::test_real_ablation_only_trains_generator`). Un primer
+intento con el notebook original falló porque el zip del dataset no estaba en la ruta esperada;
+la corrida de Cristian de la tabla anterior sí se completó. Para repetirla:
+`notebooks/pix2pix_colab.ipynb`, sección 3 (`ENTRENAR_ABLACION = True`).
 
 ## 4. Qué queda por correr
 
 | Paso | Comando o notebook | Resultado |
 |---|---|---|
 | Evaluar el test | `notebooks/pix2pix_colab.ipynb` (sección 5) | `summary.csv`, tabla, `results_grid.png`, `failures.png` |
-| Ablación | `notebooks/pix2pix_colab.ipynb` (sección 3) | fila "U-Net solo L1" de la tabla |
+| Subir los pesos de Cristian | `Redes-Pix2Pix/checkpoints/{base,ablation}/` | filas Pix2Pix y U-Net solo L1 de la tabla |
 | Captura de la demo | `python -m app.server --checkpoint …` | `docs/img/app.png` |

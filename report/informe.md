@@ -23,7 +23,8 @@ los integrantes) del que se generaron 456 pares degradado/limpio de 256×256 con
 degradaciones reproducible y un split 80/10/10 **por foto fuente** para evitar fuga de datos.
 El generador es una U-Net de 8 niveles (54.5 M de parámetros) y el discriminador un PatchGAN
 de 70×70 (2.8 M). Una corrida de 20 épocas en Colab (GPU, 522 s) redujo la L1 de validación de
-0.197 a 0.148 y subió el PSNR de validación de 18.15 a 20.26 dB y el SSIM de 0.434 a 0.508.
+0.197 a 0.148 y llevó el PSNR de validación a 20.26 dB, ≈ 1 dB por encima de la foto sin
+restaurar (19.27 dB); una corrida posterior de 45 épocas alcanzó 20.61 dB.
 El discriminador dominó desde la segunda época, de modo que el aprendizaje del generador
 estuvo guiado sobre todo por el término L1. La evaluación final sobre el split de prueba se
 genera con `src/gan/evaluate.py` contra dos líneas base (entrada sin restaurar y filtro de
@@ -237,6 +238,7 @@ poco. La corrida terminó por límite de épocas, no por early stopping.
 | 0 | 0.1973 | 18.15 | 0.4340 |
 | 4 | 0.1581 | 19.71 | 0.4974 |
 | 19 | 0.1482 | 20.26 | 0.5077 |
+| Entrada sin restaurar | 0.1680 | 19.27 | 0.4606 |
 
 ## 6. Experimentos y resultados
 
@@ -252,15 +254,20 @@ orden alfabético y las 4 de menor PSNR, sin selección manual.
 1. **Entrada sin restaurar:** la foto degradada tal cual.
 2. **Filtro de mediana 3×3:** restauración clásica sin aprendizaje.
 3. **U-Net solo L1:** mismo generador sin discriminador, $\lambda = 1000$
-   (`configs/ablation_l1.yaml`). Implementada y probada; su corrida en Colab está pendiente.
+   (`configs/ablation_l1.yaml`). Entrenada por Cristian Muñoz durante 44 épocas en Colab.
 4. **Pix2Pix ($\lambda = 100$):** modelo principal.
 
 ### 6.3 Resultados cuantitativos
 
 <!-- RESULTADOS:INICIO -->
-_Pendiente de ejecutar `src/gan/evaluate.py` sobre el split `test` con el checkpoint de la
-corrida base (`notebooks/pix2pix_colab.ipynb`). Las cifras de validación de la
-sección 5.5 no reemplazan esta tabla._
+| Modelo | n | PSNR (dB) ↑ | SSIM ↑ | L1 ↓ |
+|---|---|---|---|---|
+| Entrada (sin restaurar) | 45 | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
+| Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
+
+_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test_lineas_base_summary.csv`._
+
+_Filas de Pix2Pix y U-Net solo L1: pendientes del checkpoint de la corrida de Cristian (`Redes-Pix2Pix/checkpoints/`)._
 <!-- RESULTADOS:FIN -->
 
 ### 6.4 Resultados cualitativos
@@ -273,7 +280,8 @@ sección 5.5 no reemplazan esta tabla._
 
 ### 6.6 Discusión de resultados
 
-En validación el modelo mejora 2.1 dB de PSNR y 0.07 de SSIM en 20 épocas, y las curvas aún no
+En validación el modelo supera a la foto sin restaurar por ≈ 1 dB de PSNR y 0.047 de SSIM en 20
+épocas (en la época 0 estaba por debajo), y las curvas aún no
 se estabilizan, por lo que más épocas probablemente seguirían ayudando. El dominio temprano del
 discriminador indica que el término adversarial aportó poco en esta corrida; la comparación
 con la ablación *U-Net solo L1* es la que permite medir cuánto aporta realmente la GAN.
@@ -330,8 +338,9 @@ mantiene privado dentro del equipo (sección 3.5).
 
 1. Se construyó un dataset propio y reproducible de 456 pares sin fuga entre splits.
 2. Se implementó Pix2Pix completo en TensorFlow/Keras con pruebas automáticas de contratos.
-3. En 20 épocas el generador mejoró todas las métricas de validación (PSNR +2.1 dB, SSIM
-   +0.07, L1 −25 %); la evaluación del test con líneas base se genera desde el repositorio.
+3. En 20 épocas el generador superó a la foto sin restaurar en validación (PSNR +0.99 dB, SSIM
+   +0.047, L1 −12 %); la ablación sin GAN obtuvo cifras algo mayores (20.78 dB frente a 20.61 dB
+   a 45 épocas), lo que muestra que PSNR y SSIM premian la fidelidad que optimiza L1.
 4. La demo web restaura fotos de cualquier tamaño y formato en local.
 
 ## 10. Referencias
