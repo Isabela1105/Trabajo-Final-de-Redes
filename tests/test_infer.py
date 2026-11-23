@@ -120,3 +120,21 @@ def test_config_found_in_output_folder(trained_checkpoint: Path, tmp_path: Path)
     shutil.move(old / "config.yaml", old.parent / "config.yaml")
     _, config = load_generator(old)
     assert config.image_size == 64
+
+
+def test_restore_folder_script(trained_checkpoint: Path, tmp_path: Path) -> None:
+    from scripts.restore_folder import restore_folder
+
+    src = tmp_path / "real"
+    src.mkdir()
+    for i, size in enumerate([(40, 60), (70, 30), (50, 50)]):
+        Image.new("RGB", size, (100 + i * 30, 90, 80)).save(src / f"real_{i:03d}.jpg")
+    (src / "notas.txt").write_text("x", encoding="utf-8")
+    grid = restore_folder(
+        {"Pix2Pix": trained_checkpoint, "U-Net solo L1": trained_checkpoint}, src, tmp_path / "out"
+    )
+    assert grid.exists()
+    restored = sorted((tmp_path / "out" / "Pix2Pix").glob("*.png"))
+    assert [p.stem for p in restored] == ["real_000", "real_001", "real_002"]
+    assert Image.open(restored[1]).size == (70, 30)
+    assert len(list((tmp_path / "out" / "U-Net_solo_L1").glob("*.png"))) == 3

@@ -21,6 +21,10 @@ htmlcov/
 # ── Datos y resultados (compartir por release/Drive/HF) ────────
 data/raw/
 data/processed/
+# Fotos antiguas de Pinterest (licencia sin verificar) y zips de datos: nunca al repositorio
+data/real/
+real.zip
+datasetv1*.zip
 data/sample/*
 !data/sample/.gitkeep
 outputs/

@@ -118,20 +118,32 @@ a mano. Líneas base y protocolo: [`docs/ARQUITECTURA.md` §6](docs/ARQUITECTURA
 |---|---|---|---|---|
 | Entrada (sin restaurar) | 45 | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
 | Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
+| **U-Net solo L1** | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| Pix2Pix (λ = 100) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
 
-_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test_lineas_base_summary.csv`._
-
-_Filas de Pix2Pix y U-Net solo L1: pendientes del checkpoint de la corrida de Cristian (`Redes-Pix2Pix/checkpoints/`)._
+_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test/summary.csv`._
 <!-- RESULTADOS:FIN -->
 
-Figuras: [`docs/img/results_grid.png`](docs/img/) · Fallos:
-[`docs/img/failures.png`](docs/img/)
+Pesos evaluados: corrida reproducida con `configs/base.yaml` (20 épocas), publicados en el
+release `v1.0.0`. Los dos modelos superan a la foto sin restaurar (Pix2Pix +0.37 dB, ablación
++0.57 dB); la ablación sin GAN gana en las métricas píxel a píxel, como predice la teoría. Las
+mayores ganancias son en color y contraste; la baja resolución casi no se recupera. Análisis
+completo, desglose por degradación y curvas: [`docs/RESULTADOS.md`](docs/RESULTADOS.md).
+
+![Resultados en test](docs/img/results_grid.png)
+
+Peores casos (sin elegir a mano): [`docs/img/failures.png`](docs/img/failures.png)
 
 ---
 
 ## 5. Demo
 
 Demo principal: página propia servida por FastAPI, sin internet.
+
+**Pesos entrenados:** descargar `pix2pix_20ep.zip` (y opcionalmente `ablacion_solo_l1_20ep.zip`)
+del [release `v1.0.0`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/releases/tag/v1.0.0)
+y descomprimirlo en la raíz del repositorio: queda `outputs/base/checkpoints/` (y
+`outputs/ablation/checkpoints/`), que es lo que usan los comandos de abajo.
 
 ```bash
 python -m app.server --checkpoint outputs/base/checkpoints
@@ -481,9 +493,9 @@ git shortlog -sne origin/main
 - [x] Entrenamiento real en Colab con checkpoint en Drive (20 épocas).
 - [x] Métricas PSNR/SSIM/L1 + baselines implementadas y probadas.
 - [x] Demo web (FastAPI) + respaldo Gradio.
-- [ ] Tabla del test generada (`notebooks/pix2pix_colab.ipynb`, sección 5).
-- [ ] Ablación sin GAN entrenada (`notebooks/pix2pix_colab.ipynb`, sección 3).
-- [ ] Informe PDF desde `report/informe.md` y tag `v1.0.0` con release.
+- [x] Tabla del test generada con líneas base, Pix2Pix y ablación (`docs/RESULTADOS.md`).
+- [x] Ablación sin GAN entrenada y evaluada.
+- [x] Informe (`report/informe.md` y PDF) y tag `v1.0.0` con release y pesos del generador.
 - [ ] Dos ensayos de defensa con presentador aleatorio.
 
 ---
