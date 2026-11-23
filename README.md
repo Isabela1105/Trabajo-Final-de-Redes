@@ -100,10 +100,12 @@ Detalle completo: [`docs/MODELOS.md`](docs/MODELOS.md) y
 | 0 | 0.1973 | 18.15 | 0.4340 |
 | 16 (mejor L1) | 0.1443 | — | — |
 | 19 (última) | 0.1482 | 20.26 | 0.5077 |
+| *Entrada sin restaurar* | *0.1680* | *19.27* | *0.4606* |
 
 Fuente: `notebooks/pix2pix_entrenamiento_colab.ipynb` y
 [`docs/resultados/colab_base_20ep_log.csv`](docs/resultados/colab_base_20ep_log.csv).
-El generador mejora 2.1 dB de PSNR y 25 % de L1 en validación; el discriminador gana muy pronto
+Frente a la foto sin restaurar, el generador gana ≈ 1 dB de PSNR (19.27 → 20.26) y 0.047 de
+SSIM en validación; el discriminador gana muy pronto
 (pérdida ≈ 0 desde la época 2). Lectura completa en [`docs/RESULTADOS.md`](docs/RESULTADOS.md).
 
 ### 4.2 Split de prueba (tabla final)
@@ -112,9 +114,14 @@ Generada con `python -m src.gan.evaluate` + `python scripts/results_table.py`; n
 a mano. Líneas base y protocolo: [`docs/ARQUITECTURA.md` §6](docs/ARQUITECTURA.md).
 
 <!-- RESULTADOS:INICIO -->
-_Pendiente de ejecutar `src/gan/evaluate.py` sobre el split `test` con el checkpoint de la
-corrida base (`notebooks/pix2pix_colab.ipynb`, sección 5). Las cifras de validación de 4.1 no
-reemplazan esta tabla._
+| Modelo | n | PSNR (dB) ↑ | SSIM ↑ | L1 ↓ |
+|---|---|---|---|---|
+| Entrada (sin restaurar) | 45 | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
+| Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
+
+_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test_lineas_base_summary.csv`._
+
+_Filas de Pix2Pix y U-Net solo L1: pendientes del checkpoint de la corrida de Cristian (`Redes-Pix2Pix/checkpoints/`)._
 <!-- RESULTADOS:FIN -->
 
 Figuras: [`docs/img/results_grid.png`](docs/img/) · Fallos:
@@ -178,7 +185,7 @@ Si esto funciona, el pipeline está sano. El entrenamiento real va en Colab/Kagg
 
 ## 7. Dataset
 
-**Descarga:** el dataset está en la [carpeta de Drive del equipo](https://drive.google.com/drive/folders/1SADEgsZbRjcOhBGSgQsxNNcRtu3O-JIP), compartida solo con
+**Descarga:** [`datasetv1.zip`](https://drive.google.com/file/d/1EqFt7d8VX88XKm5Vj_vA7QO1BAx60JtZ/view?usp=sharing) y el resto del material en la [carpeta de Drive del equipo](https://drive.google.com/drive/folders/1SADEgsZbRjcOhBGSgQsxNNcRtu3O-JIP), compartida solo con
 los integrantes y el docente: contiene `datasetv1.zip` (456 pares PNG 256×256 en
 `processed/{train,val,test}/{input,target}`), `real.zip` (12 fotos antiguas para inspección
 visual), el PDF *Avance del trabajo de datos y dataset* y la carpeta `checkpoints/`. No es pública
