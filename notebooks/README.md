@@ -6,7 +6,7 @@ montan Drive, preparan rutas y llaman a los módulos del repositorio.
 | Notebook | Para qué | Estado |
 |---|---|---|
 | **`pix2pix_colab.ipynb`** | **Notebook de trabajo.** Dataset, entrenamiento base, ablación, curvas, evaluación del test con tabla y figuras automáticas, demo y descarga. | Listo. Con las opciones por defecto solo evalúa el checkpoint que ya existe. |
-| `pix2pix_entrenamiento_colab.ipynb` | **Evidencia.** La corrida base de 20 épocas tal como se ejecutó, con sus salidas. | Ejecutado (522 s; val L1 0.1482, PSNR 20.26 dB, SSIM 0.5077). No se edita. |
+| `pix2pix_entrenamiento_colab.ipynb` | **Evidencia.** La corrida base de 20 épocas tal como la ejecutó Isabela Cabezas, con sus salidas. | Ejecutado (522 s; val L1 0.1482, PSNR 20.26 dB, SSIM 0.5077). No se edita. |
 
 Los pesos, el dataset y `outputs/` **no** se suben a git; quedan en el Drive del equipo.
 

@@ -1,7 +1,8 @@
 # Resultados
 
-Responsable: Juan Sebastian Castillo Acevedo (`@Juansec01`), con los artefactos de
-entrenamiento de Cristian Muñoz (`@CristianMP355`).
+Responsable: Juan Sebastian Castillo Acevedo (`@Juansec01`). Bucle de entrenamiento de Cristian
+Muñoz (`@CristianMP355`); la corrida base en Colab la ejecutó Isabela Cabezas (`@Isabela1105`) y
+sus artefactos están en su Drive (`pix2pix_outputs/metricas_loss_existente/`).
 
 Regla: cada cifra de este documento sale de un archivo. Si un número no tiene archivo
 detrás, no se publica.

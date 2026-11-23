@@ -26,7 +26,7 @@ desde la cuenta `@Juansec01` el 22 de noviembre.
 | Jeremy Santiago Caicedo Cabezas | @JeremyCaicedo | Discriminador y pérdidas | #18, #21 | 3 | Bloques y generador U-Net (#18), discriminador PatchGAN y pérdidas (#21, issue #20), ajuste directo en `losses.py`. |
 | Cristian Fabian Muñoz Piedrahita | @CristianMP355 | Entrenamiento | #25, #26, #27, #28, #29 | 5 | Bucle D→G, smoke test, integración real, métricas y ablación, checkpoints atómicos para Colab. |
 | Juan Sebastian Castillo Acevedo | @Juansec01 | Evaluación, inferencia y demo | #30–#36 (abiertos) + andamiaje inicial | 2 | Estructura inicial del repo (CI, plantillas, docs, configs, guías) + PRs de cierre de la sección 3. |
-| Isabela Cabezas Obregón | @Isabela1105 | CI/CD, integración e informe | #14 | 1 | `.gitattributes` para las estadísticas de lenguajes. Dueña del repositorio. |
+| Isabela Cabezas Obregón | @Isabela1105 | CI/CD, integración e informe | #14 | 1 | `.gitattributes`; ejecutó la corrida base en Colab (20 épocas, `notebooks/pix2pix_entrenamiento_colab.ipynb`). Dueña del repositorio. |
 
 ## 2. Detalle por integrante
 
@@ -102,6 +102,9 @@ desde la cuenta `@Juansec01` el 22 de noviembre.
 ### Isabela Cabezas Obregón (@Isabela1105) · código 2226013
 
 - **PRs:** #14 `chore: agregar gitattributes para estadísticas de lenguajes`.
+- **Colab:** ejecutó la corrida base de 20 épocas (notebook `Pix2Pix_metricas_perdidas_existentes`,
+  en su Drive). Sus pesos, `metrics.csv`, logs y muestras están en su Drive en
+  `pix2pix_outputs/metricas_loss_existente/`.
 - **Rol:** dueña del repositorio y de la protección de `main`; responsable del tag `v1.0.0` y
   del release con el PDF del informe (`.github/workflows/release.yml`).
 - **Pendiente de su plan:** F4 (quality gates), F5 (informe y release) y F6 (participación);
@@ -112,7 +115,7 @@ desde la cuenta `@Juansec01` el 22 de noviembre.
 
 | Notebook | Estado | Resultado |
 |---|---|---|
-| `notebooks/pix2pix_entrenamiento_colab.ipynb` | ejecutado | 20 épocas en GPU, 522 s; val L1 0.1482, PSNR 20.26 dB, SSIM 0.5077 (`docs/RESULTADOS.md`). |
+| `notebooks/pix2pix_entrenamiento_colab.ipynb` | ejecutado por Isabela Cabezas | 20 épocas en GPU, 522 s; val L1 0.1482, PSNR 20.26 dB, SSIM 0.5077 (`docs/RESULTADOS.md`). |
 | `notebooks/pix2pix_colab.ipynb` | unifica el de base + ablación (falló en la celda 1) con el de métricas, más evaluación y demo | pendiente de correr la evaluación del test y la ablación. |
 
 Los checkpoints, `metrics.csv`, logs y muestras están en la carpeta de Drive del equipo
