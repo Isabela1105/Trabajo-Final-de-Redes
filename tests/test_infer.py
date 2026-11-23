@@ -109,3 +109,14 @@ def test_one_pixel_wide_image(trained_checkpoint: Path) -> None:
     generator, config = load_generator(trained_checkpoint)
     line = Image.new("RGB", (1, 50), (0, 0, 0))
     assert restore_image(generator, line, config.image_size).size == (1, 50)
+
+
+def test_config_found_in_output_folder(trained_checkpoint: Path, tmp_path: Path) -> None:
+    """Checkpoints de versiones anteriores: config.yaml solo en la carpeta de salida."""
+    import shutil
+
+    old = tmp_path / "run" / "checkpoints"
+    shutil.copytree(trained_checkpoint, old)
+    shutil.move(old / "config.yaml", old.parent / "config.yaml")
+    _, config = load_generator(old)
+    assert config.image_size == 64

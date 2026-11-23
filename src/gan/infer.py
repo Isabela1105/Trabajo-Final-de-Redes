@@ -47,12 +47,16 @@ def _config_for(checkpoint_prefix: str, config_path: str | Path | None) -> Confi
     """Config explícito si se pasa; si no, el `config.yaml` guardado junto al checkpoint."""
     if config_path is not None:
         return load_config(config_path, fixed_seed=False)
-    saved = Path(checkpoint_prefix).parent / "config.yaml"
-    if not saved.exists():
-        raise FileNotFoundError(
-            f"No se encontró {saved}. Pase --config con el YAML usado para entrenar."
-        )
-    return load_config(saved, fixed_seed=False)
+    # `train.py` copia el YAML en checkpoints/ y en la carpeta de salida; corridas de versiones
+    # anteriores solo lo tienen en la carpeta de salida.
+    folder = Path(checkpoint_prefix).parent
+    for saved in (folder / "config.yaml", folder.parent / "config.yaml"):
+        if saved.exists():
+            return load_config(saved, fixed_seed=False)
+    raise FileNotFoundError(
+        f"No se encontró config.yaml en {folder} ni en {folder.parent}. "
+        "Pase --config con el YAML usado para entrenar."
+    )
 
 
 def build_generator_from_config(config: Config) -> tf.keras.Model:
