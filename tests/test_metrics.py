@@ -67,3 +67,29 @@ def test_single_image_without_batch_axis(image: np.ndarray) -> None:
 def test_shape_mismatch_fails(image: np.ndarray) -> None:
     with pytest.raises(ValueError):
         l1(image, image[:, :32])
+
+
+def test_frechet_distance_of_identical_gaussians_is_zero() -> None:
+    from src.gan.metrics import frechet_distance
+
+    mu, sigma = np.zeros(3), np.eye(3)
+    assert frechet_distance(mu, sigma, mu, sigma) == pytest.approx(0.0, abs=1e-9)
+
+
+def test_frechet_distance_closed_form() -> None:
+    from src.gan.metrics import frechet_distance
+
+    # Misma covarianza: FID = ||mu1 - mu2||^2. Escala: Tr(I + 4I - 2·2I) = 1 por dimensión.
+    assert frechet_distance(np.zeros(2), np.eye(2), np.ones(2), np.eye(2)) == pytest.approx(2.0)
+    assert frechet_distance(np.zeros(2), np.eye(2), np.zeros(2), 4 * np.eye(2)) == pytest.approx(
+        2.0
+    )
+
+
+def test_fid_from_features_detects_shift() -> None:
+    from src.gan.metrics import fid_from_features
+
+    rng = np.random.default_rng(3)
+    real = rng.normal(size=(500, 4))
+    assert fid_from_features(real, real + 0.0) == pytest.approx(0.0, abs=1e-6)
+    assert fid_from_features(real, real + 3.0) == pytest.approx(36.0, rel=1e-6)

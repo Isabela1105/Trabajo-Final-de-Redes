@@ -199,6 +199,19 @@ def by_degradation(rows: list[dict[str, object]], model: str) -> list[dict[str, 
     return result
 
 
+def add_fid(result: EvaluationResult) -> None:
+    """Agrega la columna `fid` al resumen (descarga InceptionV3 la primera vez)."""
+    from src.gan.metrics import fid_from_features, inception_features
+
+    names = sorted(result.examples)
+    real = inception_features(np.stack([result.examples[n]["Objetivo"] for n in names]))
+    for entry in result.summary:
+        model = str(entry["model"])
+        column = "Entrada" if model == INPUT_BASELINE else model
+        fake = inception_features(np.stack([result.examples[n][column] for n in names]))
+        entry["fid"] = fid_from_features(real, fake)
+
+
 def worst_cases(rows: list[dict[str, object]], model: str, k: int = 4) -> list[str]:
     """Nombres de las k imágenes con menor PSNR para ese modelo."""
     selected = sorted((r for r in rows if r["model"] == model), key=lambda r: float(r["psnr"]))
@@ -238,6 +251,7 @@ def run(
     manifest: str | Path | None = REPO_ROOT / "data" / "manifest.csv",
     with_baselines: bool = True,
     grid_examples: int = 4,
+    fid: bool = False,
 ) -> dict[str, Path]:
     """Evalúa y escribe CSVs y figuras. Devuelve las rutas escritas."""
     from src.gan.infer import load_generator
@@ -276,6 +290,9 @@ def run(
         degradations=load_degradations(manifest),
     )
 
+    if fid:
+        add_fid(result)
+
     out = resolve_path(out_dir) if out_dir else config.output_dir / "eval"
     written = {
         "per_image": write_csv(out / "per_image.csv", result.rows),
@@ -302,11 +319,12 @@ def run(
         )
 
     for entry in result.summary:
+        fid_text = f" | FID {entry['fid']:.1f}" if "fid" in entry else ""
         print(
             f"[eval] {entry['model']:<28} n={entry['n']:<3} "
             f"PSNR {entry['psnr_mean']:.2f}±{entry['psnr_std']:.2f} dB | "
             f"SSIM {entry['ssim_mean']:.4f}±{entry['ssim_std']:.4f} | "
-            f"L1 {entry['l1_mean']:.4f}±{entry['l1_std']:.4f}"
+            f"L1 {entry['l1_mean']:.4f}±{entry['l1_std']:.4f}{fid_text}"
         )
     print(f"[eval] Resultados en {out}")
     return written
@@ -330,6 +348,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--manifest", default=str(REPO_ROOT / "data" / "manifest.csv"))
     parser.add_argument("--no-baselines", action="store_true", help="Omite Entrada y Mediana.")
+    parser.add_argument("--fid", action="store_true", help="Calcula FID (descarga InceptionV3).")
     args = parser.parse_args(argv)
 
     run(
@@ -341,6 +360,7 @@ def main(argv: list[str] | None = None) -> None:
         batch_size=args.batch_size,
         manifest=args.manifest,
         with_baselines=not args.no_baselines,
+        fid=args.fid,
     )
 
 
