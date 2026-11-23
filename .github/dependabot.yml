@@ -1,3 +1,5 @@
+# Entrega v1.0.0: dependencias congeladas. Límite 0 = Dependabot no abre PRs de versiones
+# (las alertas de seguridad siguen activas). Subir el límite para reactivarlo.
 version: 2
 updates:
   - package-ecosystem: "pip"
@@ -5,7 +7,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     labels:
       - "dependencies"
       - "area:ci"
@@ -15,7 +17,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     labels:
       - "dependencies"
       - "area:ci"
