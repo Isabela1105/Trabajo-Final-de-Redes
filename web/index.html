@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Restauración de fotografías · Pix2Pix</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <h1>Restauración de fotografías</h1>
+        <p class="sub">Pix2Pix · U-Net + PatchGAN · Redes Neuronales y Deep Learning, UAO</p>
+      </div>
+      <span id="status" class="badge" aria-live="polite">Comprobando modelo…</span>
+    </header>
+
+    <main>
+      <section class="panel" aria-labelledby="t-subir">
+        <h2 id="t-subir">1. Elige una foto degradada</h2>
+        <label id="drop" class="drop" for="file">
+          <input id="file" type="file" accept="image/*" />
+          <span>Arrastra una imagen aquí o <u>haz clic para buscarla</u></span>
+          <small>PNG, JPG o WEBP · hasta 20 MB · el modelo trabaja a 256×256</small>
+        </label>
+        <button id="restore" class="primary" type="button" disabled>Restaurar</button>
+        <p id="message" class="message" role="status"></p>
+      </section>
+
+      <section class="panel" aria-labelledby="t-resultado">
+        <h2 id="t-resultado">2. Compara</h2>
+        <div class="compare">
+          <figure>
+            <figcaption>Entrada</figcaption>
+            <div class="frame"><img id="before" alt="Imagen de entrada" /></div>
+          </figure>
+          <figure>
+            <figcaption>Restaurada</figcaption>
+            <div class="frame">
+              <img id="after" alt="Imagen restaurada" />
+              <div id="spinner" class="spinner" hidden></div>
+            </div>
+          </figure>
+        </div>
+        <a id="download" class="secondary" download="restaurada.png" hidden>Descargar PNG</a>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        La red puede inventar detalles que no existían en la foto original: úsala como apoyo,
+        no como prueba documental.
+      </p>
+    </footer>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
