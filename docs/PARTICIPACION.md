@@ -95,7 +95,7 @@ desde la cuenta `@Juansec01` el 22 de noviembre.
 | [`feat/33-results-app`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Afeat%2F33-results-app) | 4 | FID opcional, selector de ejemplos, `scripts/results_table.py`, `docs/DEMO.md`. |
 | [`fix/37-app-formats`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Afix%2F37-app-formats) | 3 | Fotos de 12 MP, alfa, EXIF, modos raros, relleno sin deformar; curvas reales y `docs/RESULTADOS.md`; notebooks de Colab. |
 | [`test/41-synthetic-sample`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Atest%2F41-synthetic-sample) | 1 | `scripts/make_synthetic_sample.py` (PR-F3 pendiente): el CI deja de saltarse el smoke training. |
-| [`docs/43-cierre-participacion`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Adocs%2F43-cierre-participacion) | 5 | README, participación, equipo, informe y referencias alineados con el trabajo real. |
+| [`docs/43-cierre-participacion`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/pulls?q=is%3Apr+head%3Adocs%2F43-cierre-participacion) | 7 | README, participación, equipo, informe y referencias alineados con el trabajo real; notebooks de Colab corregidos; `docs/GUIA_PRUEBAS.md`. |
 
 - **Informe y defensa:** §6 Experimentos y resultados, §7 Demo.
 
