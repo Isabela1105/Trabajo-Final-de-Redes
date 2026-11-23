@@ -256,7 +256,44 @@ informe se regenera con `python scripts/results_table.py`, nunca se escribe a ma
 - `docs/img/results_grid.png`: columnas `entrada | mediana | Pix2Pix | objetivo`.
 - `docs/img/failures.png`: los peores casos por PSNR, con su degradación.
 - `docs/img/app.png`: captura de la demo web.
-- FID opcional (`--fid`): necesita descargar InceptionV3; no se usa en CI.
+- FID opcional (`--fid`): necesita descargar InceptionV3; no se usa en CI. Con 45 imágenes su
+  varianza es alta, así que se reporta como dato complementario.
+
+### 6.6 Cómo se producen los resultados
+
+```bash
+# 1. Evaluar el split de prueba (baselines + Pix2Pix + ablación si existe)
+python -m src.gan.evaluate --config configs/base.yaml \
+  --checkpoint outputs/base/checkpoints \
+  --model "U-Net solo L1=outputs/ablation/checkpoints"
+
+# 2. Insertar la tabla en README e informe (sin copiar cifras a mano)
+python scripts/results_table.py --summary outputs/base/eval/summary.csv \
+  --update README.md report/informe.md
+
+# 3. Copiar las figuras definitivas
+cp outputs/base/eval/results_grid.png outputs/base/eval/failures.png docs/img/
+```
+
+Archivos que deja `src/gan/evaluate.py` en `outputs/base/eval/`:
+
+| Archivo | Contenido |
+|---|---|
+| `per_image.csv` | `image, model, degradations, psnr, ssim, l1` (una fila por imagen y modelo) |
+| `summary.csv` | `model, n, psnr_mean, psnr_std, ssim_mean, ssim_std, l1_mean, l1_std[, fid]` |
+| `by_degradation.csv` | medias del modelo principal por tipo de degradación |
+| `results_grid.png` | primeras 4 imágenes de test en orden alfabético (sin elegir) |
+| `failures.png` | 4 imágenes con menor PSNR del modelo principal |
+
+### 6.7 Lectura cualitativa: qué mirar en las figuras
+
+Estas preguntas guían la discusión; la respuesta se escribe solo después de ver
+`results_grid.png`, `failures.png` y `by_degradation.csv`.
+
+- **Ruido y JPEG:** ¿el modelo quita el ruido sin borrar bordes, como sí hace la mediana?
+- **Desvanecido y contraste:** ¿recupera el color global? La mediana no puede hacerlo.
+- **Rayones y polvo:** ¿desaparecen o quedan trazas en zonas con textura fina?
+- **Baja resolución:** ¿afila o inventa texturas? Es el principal riesgo de alucinación.
 
 ---
 

@@ -78,3 +78,51 @@ def all_metrics(
 ) -> dict[str, np.ndarray]:
     """Calcula las tres métricas por imagen. Entradas en [0, 1]."""
     return {"psnr": psnr(pred, target), "ssim": ssim(pred, target), "l1": l1(pred, target)}
+
+
+# ---------------------------------------------------------------------------
+# FID (opcional): necesita descargar los pesos de InceptionV3, por eso no corre en CI.
+# ---------------------------------------------------------------------------
+def frechet_distance(
+    mu1: np.ndarray, sigma1: np.ndarray, mu2: np.ndarray, sigma2: np.ndarray
+) -> float:
+    """Distancia de Fréchet entre dos gaussianas N(mu1, sigma1) y N(mu2, sigma2).
+
+    FID = ||mu1 − mu2||² + Tr(sigma1 + sigma2 − 2·(sigma1·sigma2)^(1/2))
+
+    La raíz de la matriz se obtiene con los valores propios de sigma1^(1/2)·sigma2·sigma1^(1/2),
+    que es simétrica y semidefinida positiva (más estable que `sqrtm` y sin SciPy).
+    """
+    mu1, mu2 = np.atleast_1d(mu1), np.atleast_1d(mu2)
+    sigma1, sigma2 = np.atleast_2d(sigma1), np.atleast_2d(sigma2)
+    vals1, vecs1 = np.linalg.eigh(sigma1)
+    sqrt1 = (vecs1 * np.sqrt(np.clip(vals1, 0, None))) @ vecs1.T
+    middle = sqrt1 @ sigma2 @ sqrt1
+    trace_sqrt = np.sqrt(np.clip(np.linalg.eigvalsh((middle + middle.T) / 2), 0, None)).sum()
+    diff = mu1 - mu2
+    return float(diff @ diff + np.trace(sigma1) + np.trace(sigma2) - 2.0 * trace_sqrt)
+
+
+def _stats(features: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    features = np.asarray(features, dtype=np.float64)
+    return features.mean(axis=0), np.cov(features, rowvar=False)
+
+
+def fid_from_features(real: np.ndarray, fake: np.ndarray) -> float:
+    """FID a partir de vectores de características (N, D) ya extraídos."""
+    return frechet_distance(*_stats(real), *_stats(fake))
+
+
+def inception_features(images: np.ndarray, batch_size: int = 16) -> np.ndarray:
+    """Características de 2048 dimensiones de InceptionV3 (ImageNet). Entradas en [0, 1].
+
+    Con solo 45 imágenes de test el FID tiene mucha varianza: se reporta como dato
+    complementario, nunca como métrica principal.
+    """
+    model = tf.keras.applications.InceptionV3(include_top=False, pooling="avg", weights="imagenet")
+    preprocess = tf.keras.applications.inception_v3.preprocess_input
+    features = []
+    for start in range(0, len(images), batch_size):
+        batch = tf.image.resize(images[start : start + batch_size] * 255.0, (299, 299))
+        features.append(model(preprocess(batch), training=False).numpy())
+    return np.concatenate(features)

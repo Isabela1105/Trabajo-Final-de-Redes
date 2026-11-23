@@ -143,6 +143,42 @@ a.secondary {
   color: var(--accent);
 }
 
+.hint {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 0.4rem;
+  max-height: 190px;
+  overflow-y: auto;
+}
+
+.examples button {
+  margin: 0;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: none;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+
+.examples button[aria-pressed="true"],
+.examples button:focus-visible {
+  border-color: var(--accent);
+}
+
+.examples img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .message {
   min-height: 1.5em;
   font-size: 0.9rem;

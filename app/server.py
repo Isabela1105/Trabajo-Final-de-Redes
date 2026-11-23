@@ -34,6 +34,22 @@ from src.gan.infer import load_generator, restore_image
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = REPO_ROOT / "web"
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
+# Ejemplos del selector: primero las entradas degradadas del split de prueba (se generan con
+# scripts/build_dataset.py y no se suben a git); si no existen, web/examples/.
+DEFAULT_EXAMPLE_DIRS = (REPO_ROOT / "data" / "processed" / "test" / "input", WEB_DIR / "examples")
+EXAMPLE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
+MAX_EXAMPLES = 24
+
+
+def find_examples(directories: tuple[Path, ...] | list[Path]) -> dict[str, Path]:
+    """Primer directorio con imágenes -> {nombre: ruta}, ordenado y acotado."""
+    for directory in directories:
+        directory = Path(directory)
+        if directory.is_dir():
+            files = sorted(p for p in directory.iterdir() if p.suffix.lower() in EXAMPLE_SUFFIXES)
+            if files:
+                return {p.name: p for p in files[:MAX_EXAMPLES]}
+    return {}
 
 
 class ModelHolder:
@@ -74,9 +90,11 @@ def create_app(
     *,
     generator: tf.keras.Model | None = None,
     image_size: int = 256,
+    examples_dirs: tuple[Path, ...] | list[Path] = DEFAULT_EXAMPLE_DIRS,
 ) -> FastAPI:
     """Fábrica de la app. Los tests inyectan un generador pequeño sin checkpoint."""
     holder = ModelHolder(checkpoint, generator=generator, image_size=image_size)
+    examples = find_examples(examples_dirs)
     api = FastAPI(title="Restauración de fotografías con Pix2Pix", version="1.0.0")
 
     @api.get("/api/health")
@@ -90,6 +108,19 @@ def create_app(
                 "error": holder.error,
             }
         )
+
+    @api.get("/api/examples")
+    def list_examples() -> JSONResponse:
+        return JSONResponse(
+            [{"name": name, "url": f"/api/examples/{name}"} for name in sorted(examples)]
+        )
+
+    @api.get("/api/examples/{name}")
+    def get_example(name: str) -> FileResponse:
+        # Solo se sirven archivos del índice: evita rutas como ../../secretos.
+        if name not in examples:
+            raise HTTPException(status_code=404, detail="Ejemplo no encontrado.")
+        return FileResponse(examples[name])
 
     @api.post("/api/restore")
     async def restore(file: UploadFile = File(...)) -> Response:  # noqa: B008

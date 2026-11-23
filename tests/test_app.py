@@ -66,3 +66,13 @@ def test_serves_web_page(client: TestClient) -> None:
     res = client.get("/")
     assert res.status_code == 200
     assert "/api/restore" in client.get("/static/app.js").text
+
+
+def test_examples_are_listed_and_served(trained_checkpoint: Path, tmp_path: Path) -> None:
+    Image.fromarray(np.zeros((8, 8, 3), np.uint8)).save(tmp_path / "foto_001_v0.png")
+    (tmp_path / "notas.txt").write_text("no es imagen", encoding="utf-8")
+    client = TestClient(create_app(trained_checkpoint, examples_dirs=[tmp_path]))
+    items = client.get("/api/examples").json()
+    assert [i["name"] for i in items] == ["foto_001_v0.png"]
+    assert client.get(items[0]["url"]).status_code == 200
+    assert client.get("/api/examples/..%2Fnotas.txt").status_code == 404

@@ -38,6 +38,37 @@ async function checkHealth() {
   }
 }
 
+async function loadExamples() {
+  try {
+    const res = await fetch("/api/examples");
+    const items = await res.json();
+    if (!items.length) return;
+    const box = $("examples");
+    for (const item of items) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.title = item.name;
+      button.setAttribute("role", "listitem");
+      button.setAttribute("aria-pressed", "false");
+      const img = document.createElement("img");
+      img.src = item.url;
+      img.alt = item.name;
+      img.loading = "lazy";
+      button.append(img);
+      button.addEventListener("click", async () => {
+        box.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", "false"));
+        button.setAttribute("aria-pressed", "true");
+        const blob = await (await fetch(item.url)).blob();
+        setFile(new File([blob], item.name, { type: blob.type || "image/png" }));
+      });
+      box.append(button);
+    }
+    $("examples-box").hidden = false;
+  } catch {
+    /* sin ejemplos: la demo sigue funcionando con imágenes propias */
+  }
+}
+
 function setFile(file) {
   if (!file) return;
   if (!file.type.startsWith("image/")) {
@@ -73,6 +104,7 @@ async function restore() {
     download.hidden = false;
     say("Listo.");
     checkHealth();
+loadExamples();
   } catch (error) {
     say(error.message, true);
   } finally {
@@ -98,3 +130,4 @@ restoreBtn.addEventListener("click", restore);
 drop.addEventListener("drop", (event) => setFile(event.dataTransfer.files[0]));
 
 checkHealth();
+loadExamples();
