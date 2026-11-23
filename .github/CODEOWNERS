@@ -34,6 +34,8 @@
 
 # ── Evaluación, inferencia y demo ────────────────────────────────
 /src/gan/metrics.py          @Juansec01
+/src/gan/losses_nitidez.py   @Juansec01 @JeremyCaicedo
+/configs/nitidez.yaml        @Juansec01 @CristianMP355
 /src/gan/evaluate.py         @Juansec01
 /src/gan/infer.py            @Juansec01
 /app/                        @Juansec01
