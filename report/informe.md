@@ -264,10 +264,10 @@ orden alfabético y las 4 de menor PSNR, sin selección manual.
 |---|---|---|---|---|
 | Entrada (sin restaurar) | 45 | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
 | Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
+| **U-Net solo L1** | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| Pix2Pix (λ = 100) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
 
-_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test_lineas_base_summary.csv`._
-
-_Filas de Pix2Pix y U-Net solo L1: pendientes del checkpoint de la corrida de Cristian (`Redes-Pix2Pix/checkpoints/`)._
+_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test/summary.csv`._
 <!-- RESULTADOS:FIN -->
 
 ### 6.4 Resultados cualitativos
@@ -280,11 +280,24 @@ _Filas de Pix2Pix y U-Net solo L1: pendientes del checkpoint de la corrida de Cr
 
 ### 6.6 Discusión de resultados
 
-En validación el modelo supera a la foto sin restaurar por ≈ 1 dB de PSNR y 0.047 de SSIM en 20
-épocas (en la época 0 estaba por debajo), y las curvas aún no
-se estabilizan, por lo que más épocas probablemente seguirían ayudando. El dominio temprano del
-discriminador indica que el término adversarial aportó poco en esta corrida; la comparación
-con la ablación *U-Net solo L1* es la que permite medir cuánto aporta realmente la GAN.
+Los pesos evaluados son de una corrida reproducida con `configs/base.yaml` (misma semilla, 20
+épocas para cada modelo), cuyas curvas de validación coinciden con las de la corrida de Colab.
+
+En el test, Pix2Pix supera a la foto sin restaurar por 0.37 dB de PSNR y 0.028 de SSIM, y la
+ablación sin GAN por 0.57 dB y 0.045; el filtro de mediana empeora el PSNR. La ablación gana a
+Pix2Pix en las tres métricas y en 33 de las 45 imágenes: PSNR, SSIM y L1 premian la fidelidad
+píxel a píxel que optimiza L1, mientras el término adversarial empuja a texturas plausibles que
+no coinciden con el píxel exacto. Además, el discriminador dominó desde la segunda época, así que
+su señal aportó poco en 20 épocas.
+
+El modelo ayuda donde hay más daño: en las 28 imágenes que mejora, la entrada tenía 18.9 dB en
+promedio; en las que empeora, 22.6 dB. Por tipo de degradación, las mayores ganancias están en
+desvanecido (+1.4 dB) y contraste (+1.0 dB), y las menores en baja resolución (+0.8 dB): el modelo
+recupera color, pero no detalle que no existe. Los tres peores casos son las variantes de una
+misma foto (flores sobre cielo azul), donde el ruido sobre una zona lisa deja textura granulada.
+
+En las 12 fotografías antiguas reales, el modelo sube el contraste y atenúa grietas finas, pero no
+rellena roturas, manchas ni partes faltantes, que no están entre las degradaciones de entrenamiento.
 
 ## 7. Aplicación y demo
 
@@ -338,10 +351,13 @@ mantiene privado dentro del equipo (sección 3.5).
 
 1. Se construyó un dataset propio y reproducible de 456 pares sin fuga entre splits.
 2. Se implementó Pix2Pix completo en TensorFlow/Keras con pruebas automáticas de contratos.
-3. En 20 épocas el generador superó a la foto sin restaurar en validación (PSNR +0.99 dB, SSIM
-   +0.047, L1 −12 %); la ablación sin GAN obtuvo cifras algo mayores (20.78 dB frente a 20.61 dB
-   a 45 épocas), lo que muestra que PSNR y SSIM premian la fidelidad que optimiza L1.
-4. La demo web restaura fotos de cualquier tamaño y formato en local.
+3. En el test, Pix2Pix supera a la foto sin restaurar (20.67 frente a 20.30 dB; SSIM 0.684 frente
+   a 0.656), pero la ablación sin GAN obtiene mejores métricas (20.87 dB; SSIM 0.701): PSNR y SSIM
+   premian la fidelidad que optimiza L1, no el realismo que aporta el discriminador.
+4. El modelo corrige sobre todo color y contraste; no recupera nitidez perdida ni daños reales
+   fuera de las 8 degradaciones sintéticas. Más épocas, un discriminador menos dominante y pares
+   reales escaneados son los siguientes pasos.
+5. La demo web restaura fotos de cualquier tamaño y formato en local.
 
 ## 10. Referencias
 
