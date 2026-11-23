@@ -122,3 +122,43 @@ class TensorBoardLogger:
         """Cierra el writer para que no queden eventos sin volcar."""
         self._writer.flush()
         self._writer.close()
+
+
+def save_comparison_grid(
+    examples: dict[str, dict[str, object]],
+    names: list[str],
+    columns: list[str],
+    path: str | Path,
+    *,
+    row_labels: dict[str, str] | None = None,
+) -> Path:
+    """Cuadrícula de evaluación: una fila por imagen y una columna por modelo.
+
+    Autor: Juan Sebastian Castillo Acevedo (@Juansec01). La usa `src/gan/evaluate.py` para
+    `results_grid.png` y `failures.png`. `examples[nombre][columna]` es un arreglo
+    (H, W, 3) ya en [0, 1]; las columnas que falten se omiten.
+    """
+    if not names:
+        raise ValueError("No hay imágenes para la cuadrícula.")
+    columns = [c for c in columns if all(c in examples[n] for n in names)]
+    fig, axes = plt.subplots(
+        nrows=len(names),
+        ncols=len(columns),
+        figsize=(2.6 * len(columns), 2.6 * len(names)),
+        squeeze=False,
+    )
+    for row, name in enumerate(names):
+        for col, column in enumerate(columns):
+            ax = axes[row][col]
+            ax.imshow(examples[name][column])
+            ax.set_xticks([])
+            ax.set_yticks([])
+            if row == 0:
+                ax.set_title(column, fontsize=9)
+            if col == 0:
+                label = (row_labels or {}).get(name, name)
+                ax.set_ylabel(label, fontsize=8)
+    fig.tight_layout()
+    output = Path(path)
+    _atomic_savefig(fig, output)
+    return output
