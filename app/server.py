@@ -20,16 +20,20 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 import os
 from pathlib import Path
 
+import numpy as np
 import tensorflow as tf
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 
+from src.gan.data.dataset import to_rgb
 from src.gan.infer import MAX_SIDE, load_generator, restore_image
+from src.gan.metrics import psnr, ssim
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = REPO_ROOT / "web"
@@ -38,7 +42,7 @@ MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
 # scripts/build_dataset.py y no se suben a git); si no existen, web/examples/.
 DEFAULT_EXAMPLE_DIRS = (REPO_ROOT / "data" / "processed" / "test" / "input", WEB_DIR / "examples")
 EXAMPLE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
-MAX_EXAMPLES = 24
+MAX_EXAMPLES = 60  # alcanza para los 45 pares de test
 
 
 def find_examples(directories: tuple[Path, ...] | list[Path]) -> dict[str, Path]:
@@ -50,6 +54,26 @@ def find_examples(directories: tuple[Path, ...] | list[Path]) -> dict[str, Path]
             if files:
                 return {p.name: p for p in files[:MAX_EXAMPLES]}
     return {}
+
+
+def find_originals(examples: dict[str, Path]) -> dict[str, Path]:
+    """Para cada ejemplo `.../input/x.png`, su original `.../target/x.png` si existe."""
+    originals = {}
+    for name, path in examples.items():
+        target = path.parent.parent / "target" / name
+        if path.parent.name == "input" and target.is_file():
+            originals[name] = target
+    return originals
+
+
+def compare_to_original(image: Image.Image, original: Image.Image) -> dict[str, float]:
+    """PSNR y SSIM en [0, 1] contra la original (llevada al tamaño de `image`)."""
+    a = np.asarray(to_rgb(image), dtype=np.float32) / 255.0
+    ref = to_rgb(original)
+    if ref.size != image.size:
+        ref = ref.resize(image.size, Image.Resampling.BICUBIC)
+    b = np.asarray(ref, dtype=np.float32) / 255.0
+    return {"psnr": round(float(psnr(a, b)[0]), 2), "ssim": round(float(ssim(a, b)[0]), 4)}
 
 
 class ModelHolder:
@@ -95,6 +119,7 @@ def create_app(
     """Fábrica de la app. Los tests inyectan un generador pequeño sin checkpoint."""
     holder = ModelHolder(checkpoint, generator=generator, image_size=image_size)
     examples = find_examples(examples_dirs)
+    originals = find_originals(examples)
     api = FastAPI(title="Restauración de fotografías con Pix2Pix", version="1.0.0")
 
     @api.get("/api/health")
@@ -112,7 +137,14 @@ def create_app(
     @api.get("/api/examples")
     def list_examples() -> JSONResponse:
         return JSONResponse(
-            [{"name": name, "url": f"/api/examples/{name}"} for name in sorted(examples)]
+            [
+                {
+                    "name": name,
+                    "url": f"/api/examples/{name}",
+                    "original_url": f"/api/examples/{name}/original" if name in originals else None,
+                }
+                for name in sorted(examples)
+            ]
         )
 
     @api.get("/api/examples/{name}")
@@ -122,8 +154,22 @@ def create_app(
             raise HTTPException(status_code=404, detail="Ejemplo no encontrado.")
         return FileResponse(examples[name])
 
+    @api.get("/api/examples/{name}/original")
+    def get_original(name: str) -> FileResponse:
+        if name not in originals:
+            raise HTTPException(status_code=404, detail="Este ejemplo no tiene original.")
+        return FileResponse(originals[name])
+
     @api.post("/api/restore")
-    async def restore(file: UploadFile = File(...)) -> Response:  # noqa: B008
+    async def restore(
+        file: UploadFile = File(...),  # noqa: B008
+        example: str | None = Form(None),  # noqa: B008
+    ) -> Response:
+        """Devuelve el PNG restaurado.
+
+        Si `example` es un ejemplo del test con original, agrega la cabecera `X-Metricas`
+        (JSON con PSNR y SSIM de la entrada y de la restaurada frente a la original).
+        """
         data = await file.read(MAX_UPLOAD_BYTES + 1)
         if not data:
             raise HTTPException(status_code=400, detail="El archivo está vacío.")
@@ -141,7 +187,16 @@ def create_app(
         restored = restore_image(generator, image, holder.image_size)
         buffer = io.BytesIO()
         restored.save(buffer, format="PNG")
-        return Response(content=buffer.getvalue(), media_type="image/png")
+        headers = {}
+        if example and example in originals:
+            with Image.open(originals[example]) as original:
+                original.load()
+                metrics = {
+                    "entrada": compare_to_original(image, original),
+                    "restaurada": compare_to_original(restored, original),
+                }
+            headers["X-Metricas"] = json.dumps(metrics)
+        return Response(content=buffer.getvalue(), media_type="image/png", headers=headers)
 
     if WEB_DIR.is_dir():
         api.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
