@@ -12,7 +12,7 @@ lang: es
 ---
 
 **Repositorio:** <https://github.com/Isabela1105/Trabajo-Final-de-Redes>
-**Tag de resultados:** `v1.0.0`
+**Tag de resultados:** `v1.0.0` (20 épocas); modelo vigente: 100 épocas, época 62 (§6.7)
 
 ## Resumen
 
@@ -264,10 +264,11 @@ orden alfabético y las 4 de menor PSNR, sin selección manual.
 |---|---|---|---|---|
 | Entrada (sin restaurar) | 45 | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
 | Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
-| **U-Net solo L1** | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
-| Pix2Pix (λ = 100) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
+| **U-Net solo L1 (20 épocas)** | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| Pix2Pix 20 épocas (v1.0.0) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
+| Pix2Pix 100 épocas, mejor validación (época 62) | 45 | 20.77 ± 2.12 | 0.7006 ± 0.1060 | 0.0727 ± 0.0224 |
 
-_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test/summary.csv`._
+_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test_100ep/summary.csv`._
 <!-- RESULTADOS:FIN -->
 
 ### 6.4 Resultados cualitativos
@@ -298,6 +299,32 @@ misma foto (flores sobre cielo azul), donde el ruido sobre una zona lisa deja te
 
 En las 12 fotografías antiguas reales, el modelo sube el contraste y atenúa grietas finas, pero no
 rellena roturas, manchas ni partes faltantes, que no están entre las degradaciones de entrenamiento.
+
+
+### 6.7 Nueva sustentación: 100 épocas y selección por validación
+
+Se repitió el entrenamiento de Pix2Pix en Colab (GPU T4) con los mismos datos e hiperparámetros,
+hasta 100 épocas y sin early stopping. Una primera corrida completó las 100 épocas, pero su
+última época dio 20.41 dB y 0.654 de SSIM en test, por debajo del modelo de 20 épocas. En una
+GAN la calidad no sube de forma monótona: la L1 de validación oscila entre 0.140 y 0.161 de una
+época a otra. Por eso `train.py` guarda ahora el generador de la época con mejor L1 de
+validación (`best/`). En la segunda corrida ese punto fue la época 62 (21.18 dB y 0.554 en
+validación); las ocho épocas siguientes no lo superaron. La corrida se detuvo en la época 70
+porque se llenó el almacenamiento de Drive.
+
+El modelo elegido por validación obtiene en test 20.77 dB, 0.7006 de SSIM y 0.0727 de L1. Mejora
+la entrega anterior en las tres métricas y la entrada en 29 de 45 imágenes; frente a la foto sin
+restaurar gana 0.47 dB y 0.045 de SSIM. La U-Net solo L1 sigue ligeramente arriba en PSNR y queda
+empatada en SSIM. Con 45 imágenes y una desviación cercana a 2.1 dB, las diferencias de 0.1 dB en
+la media están dentro del ruido; la mejora más clara es el SSIM.
+
+El análisis por nivel de daño muestra una correlación de −0.71 entre el PSNR de la entrada y la
+ganancia. En entradas de menos de 20 dB el modelo gana entre 2.0 y 2.6 dB y mejora 21 de 23
+imágenes. En entradas de 22 dB o más empeora 10 de 11 (−3.3 dB): el entrenamiento solo incluyó
+pares dañados, así que el modelo nunca aprendió a dejar una foto casi limpia sin cambios. Por tipo
+de daño, las mayores ganancias son en rayones (+2.4 dB), desvanecido (+1.4 dB), contraste
+(+1.4 dB) y ruido (+1.0 dB); las menores, en desenfoque, baja resolución y JPEG (+0.2 a +0.6 dB),
+porque el detalle fino perdido no puede inferirse a 256×256 con una pérdida L1.
 
 ## 7. Aplicación y demo
 

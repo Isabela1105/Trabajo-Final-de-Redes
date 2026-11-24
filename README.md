@@ -118,17 +118,25 @@ a mano. Líneas base y protocolo: [`docs/ARQUITECTURA.md` §6](docs/ARQUITECTURA
 |---|---|---|---|---|
 | Entrada (sin restaurar) | 45 | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
 | Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
-| **U-Net solo L1** | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
-| Pix2Pix (λ = 100) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
+| **U-Net solo L1 (20 épocas)** | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| Pix2Pix 20 épocas (v1.0.0) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
+| Pix2Pix 100 épocas, mejor validación (época 62) | 45 | 20.77 ± 2.12 | 0.7006 ± 0.1060 | 0.0727 ± 0.0224 |
 
-_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test/summary.csv`._
+_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test_100ep/summary.csv`._
 <!-- RESULTADOS:FIN -->
 
-Pesos evaluados: corrida reproducida con `configs/base.yaml` (20 épocas), publicados en el
-release `v1.0.0`. Los dos modelos superan a la foto sin restaurar (Pix2Pix +0.37 dB, ablación
-+0.57 dB); la ablación sin GAN gana en las métricas píxel a píxel, como predice la teoría. Las
-mayores ganancias son en color y contraste; la baja resolución casi no se recupera. Análisis
-completo, desglose por degradación y curvas: [`docs/RESULTADOS.md`](docs/RESULTADOS.md).
+**Modelo vigente:** Pix2Pix entrenado hasta 100 épocas en Colab (T4) y **elegido por la mejor
+L1 de validación (época 62)**, no por la última época: en una GAN la validación oscila, y la
+última época de una corrida completa de 100 quedó en 20.41 dB, por debajo del modelo de 20.
+Frente a la entrega `v1.0.0` mejora las tres métricas (+0.10 dB, +0.017 SSIM) y mejora la
+entrada en 29 de 45 fotos; frente a la foto sin restaurar gana +0.47 dB y +0.045 de SSIM.
+La U-Net solo L1 sigue siendo la mejor en PSNR, como predice la teoría (L1 optimiza justo la
+fidelidad píxel a píxel); en SSIM quedan empatadas.
+
+Análisis de errores: el modelo gana +2.0 a +2.6 dB en fotos muy dañadas, pero **empeora las poco
+dañadas** (≥ 22 dB de entrada: −3.3 dB, 10 de 11) porque nunca vio pares sin daño; recupera bien
+color, contraste, rayones y ruido, y poco el desenfoque, la baja resolución y el JPEG. Todo en
+[`docs/RESULTADOS.md` §6](docs/RESULTADOS.md#6-nueva-sustentación-100-épocas-y-selección-por-validación).
 
 ![Resultados en test](docs/img/results_grid.png)
 
@@ -149,6 +157,10 @@ y descomprimirlo en la raíz del repositorio: queda `outputs/base/checkpoints/` 
 python -m app.server --checkpoint outputs/base/checkpoints
 # abrir http://127.0.0.1:8000
 ```
+
+**Modelo vigente (100 épocas, época 62):** copiar la carpeta `best/` y `config.yaml` de la
+corrida (`pix2pix_100ep_v2/` en Drive) a `outputs/base100/` y usar
+`python -m app.server --checkpoint outputs/base100/best`.
 
 Respaldo con Gradio: `python -m app.gradio_app --checkpoint outputs/base/checkpoints`.
 API, Colab y plan A/B/C: [`docs/DEMO.md`](docs/DEMO.md).
