@@ -289,8 +289,3 @@ figcaption {
   }
 }
 
-footer {
-  padding: 0 clamp(1rem, 4vw, 3rem) 2rem;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
