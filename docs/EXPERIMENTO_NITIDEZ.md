@@ -55,5 +55,42 @@ En local (sin GPU, ~8 h): `python -m src.gan.train --config configs/nitidez.yaml
 ## Resultado
 
 <!-- NITIDEZ:INICIO -->
-_Pendiente de correr en Colab._
+Corrida de **20 épocas** (las mismas que el modelo entregado, para comparar solo la receta),
+en CPU, con `configs/nitidez.yaml`. Registro: `docs/resultados/nitidez_20ep_metrics.csv`;
+evaluación: `docs/resultados/test_nitidez/`.
+
+**Test (45 pares, [0, 1])**
+
+| Modelo | PSNR (dB) ↑ | SSIM ↑ | L1 ↓ | Nitidez relativa* |
+|---|---|---|---|---|
+| Entrada (sin restaurar) | 20.30 ± 2.68 | 0.656 | 0.0749 | 0.93 |
+| U-Net solo L1 | 20.87 ± 1.98 | 0.701 | 0.0704 | 0.69 |
+| Pix2Pix entregado | 20.67 ± 2.15 | 0.684 | 0.0732 | 0.72 |
+| **Pix2Pix nitidez** | **20.79 ± 2.24** | 0.682 | 0.0730 | **0.73** |
+
+\* Energía media de gradientes de la salida dividida por la de la original (1 = tan nítida como
+la original). La entrada da 0.93 porque el ruido también genera gradientes.
+
+**Lectura**
+
+- **El discriminador dejó de dominar**: su pérdida se mantuvo en 0.18–0.20 en lugar de caer a
+  ≈ 0.01 desde la época 2. El cambio de equilibrio funcionó.
+- **Mejor PSNR que el modelo entregado** (+0.12 dB; mejor en 27 de 45 imágenes) con SSIM
+  prácticamente igual. Mejora en desenfoque (+0.25 dB), ruido (+0.23 dB), contraste (+0.44 dB)
+  y rayones (+0.66 dB); empeora un poco en JPEG (−0.26 dB) y baja resolución (−0.15 dB).
+- **La nitidez sube poco** (0.72 → 0.73). Visualmente los dos modelos se parecen mucho
+  (`docs/img/comparacion_nitidez.png`): en la foto muy desenfocada (`0815_v1`) ninguno recupera
+  la textura del champiñón, porque esa información ya no existe en la entrada.
+- **La U-Net solo L1 sigue siendo la más borrosa** (0.69), como predice la teoría: el término
+  adversarial y la perceptual sí empujan hacia más detalle, aunque en 20 épocas el efecto es
+  pequeño.
+
+![Comparación con zoom](img/comparacion_nitidez.png)
+![Curvas](img/curvas_nitidez_20ep.png)
+
+**Conclusión.** La receta corrige el desequilibrio del discriminador y mejora ligeramente las
+métricas, pero con 20 épocas no produce un salto visible de nitidez. Los pasos con más
+potencial son entrenar las 100 épocas en GPU y entrenar con recortes a resolución completa en
+vez de fotos reducidas a 256×256. La entrega `v1.0.0` se mantiene con el modelo original; los
+pesos de este experimento son opcionales (`nitidez_20ep.zip`).
 <!-- NITIDEZ:FIN -->
