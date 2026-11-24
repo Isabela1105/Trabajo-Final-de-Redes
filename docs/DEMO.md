@@ -46,7 +46,8 @@ uvicorn app.server:app --port 8000
 | `GET` | `/api/health` | `{"model_loaded", "checkpoint", "image_size", "error"}`. |
 | `GET` | `/api/examples` | Lista de ejemplos del selector. |
 | `GET` | `/api/examples/{nombre}` | Imagen de ejemplo (solo archivos del índice). |
-| `POST` | `/api/restore` | `multipart/form-data` con `file`; responde `image/png` restaurada. |
+| `GET` | `/api/examples/{nombre}/original` | Original sin daño del ejemplo (si existe `target/`). |
+| `POST` | `/api/restore` | `multipart/form-data` con `file` (y opcional `example`); responde `image/png`. Con `example`, la cabecera `X-Metricas` trae PSNR/SSIM de entrada y restaurada frente a la original. |
 
 Errores: `400` archivo vacío, `413` más de 20 MB, `415` no es imagen, `503` sin modelo.
 
@@ -81,7 +82,14 @@ Así una foto vertical de celular no sale estirada ni rotada.
 Si no hay ni portátil ni Colab: la galería precalculada `docs/img/results_grid.png` y
 `docs/img/failures.png` en las diapositivas, más un video corto de la demo grabado antes.
 
-## 7. Limitaciones
+## 7. Comparación con la original
+
+Si existe `data/processed/test/` (descomprimiendo `datasetv1.zip`), el selector muestra las 45
+fotos de prueba. Al elegir una, o al arrastrar un archivo con el mismo nombre, la página agrega
+una tercera columna **Original (referencia)** y muestra el PSNR y el SSIM de la entrada y de la
+restaurada frente a la original. Así se ve cuánto mejora el modelo en cada foto.
+
+## 8. Limitaciones
 
 - El modelo trabaja a 256×256: en fotos grandes la salida se ve más suave que la original.
 - Puede **inventar** detalles (caras, texto) que no existían; no sirve como prueba documental.

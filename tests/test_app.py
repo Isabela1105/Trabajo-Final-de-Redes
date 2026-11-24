@@ -86,3 +86,34 @@ def test_restore_large_jpeg_and_rgba(client: TestClient) -> None:
     assert max(Image.open(io.BytesIO(res.content)).size) <= 4096
     res = client.post("/api/restore", files={"file": ("a.png", _png(mode="RGBA"), "image/png")})
     assert res.status_code == 200
+
+
+def test_example_original_and_metrics(trained_checkpoint: Path, tmp_path: Path) -> None:
+    """Un ejemplo del test con original: se sirve la original y el restore devuelve métricas."""
+    import json
+
+    (tmp_path / "input").mkdir()
+    (tmp_path / "target").mkdir()
+    clean = np.full((64, 64, 3), 140, np.uint8)
+    noisy = np.clip(clean + np.random.default_rng(0).integers(-40, 41, clean.shape), 0, 255)
+    Image.fromarray(noisy.astype(np.uint8)).save(tmp_path / "input" / "a.png")
+    Image.fromarray(clean).save(tmp_path / "target" / "a.png")
+    Image.fromarray(clean).save(tmp_path / "input" / "sin_original.png")
+    client = TestClient(create_app(trained_checkpoint, examples_dirs=[tmp_path / "input"]))
+
+    items = {i["name"]: i for i in client.get("/api/examples").json()}
+    assert items["a.png"]["original_url"] == "/api/examples/a.png/original"
+    assert items["sin_original.png"]["original_url"] is None
+    assert client.get("/api/examples/a.png/original").status_code == 200
+    assert client.get("/api/examples/sin_original.png/original").status_code == 404
+
+    data = (tmp_path / "input" / "a.png").read_bytes()
+    res = client.post(
+        "/api/restore", files={"file": ("a.png", data, "image/png")}, data={"example": "a.png"}
+    )
+    assert res.status_code == 200
+    metrics = json.loads(res.headers["X-Metricas"])
+    assert set(metrics) == {"entrada", "restaurada"}
+    assert metrics["entrada"]["psnr"] > 0 and 0 <= metrics["restaurada"]["ssim"] <= 1
+    plain = client.post("/api/restore", files={"file": ("a.png", data, "image/png")})
+    assert "X-Metricas" not in plain.headers

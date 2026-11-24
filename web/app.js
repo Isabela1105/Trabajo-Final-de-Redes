@@ -14,7 +14,53 @@ const message = $("message");
 const statusBadge = $("status");
 
 let currentFile = null;
+let currentExample = null; // nombre del ejemplo de test elegido (tiene original)
+const exampleIndex = new Map(); // nombre de archivo -> ejemplo (para fotos arrastradas)
 let afterUrl = null;
+const original = $("original");
+const figOriginal = $("fig-original");
+const compare = $("compare");
+const current = $("current");
+const mBefore = $("m-before");
+const mAfter = $("m-after");
+const delta = $("delta");
+
+function fmt(m) {
+  return `PSNR ${m.psnr.toFixed(2)} dB · SSIM ${m.ssim.toFixed(3)}`;
+}
+
+function clearMetrics() {
+  mBefore.textContent = "";
+  mAfter.textContent = "";
+  delta.hidden = true;
+}
+
+function showOriginal(url) {
+  if (url) {
+    original.src = url;
+    figOriginal.hidden = false;
+    compare.classList.add("con-original");
+  } else {
+    original.removeAttribute("src");
+    figOriginal.hidden = true;
+    compare.classList.remove("con-original");
+  }
+}
+
+function showMetrics(header) {
+  if (!header) return;
+  const m = JSON.parse(header);
+  mBefore.textContent = fmt(m.entrada);
+  mAfter.textContent = fmt(m.restaurada);
+  const d = m.restaurada.psnr - m.entrada.psnr;
+  const signo = d >= 0 ? "+" : "−";
+  delta.textContent =
+    d >= 0
+      ? `La restaurada se parece más a la original: ${signo}${Math.abs(d).toFixed(2)} dB de PSNR.`
+      : `En esta foto el modelo no mejora el PSNR (${signo}${Math.abs(d).toFixed(2)} dB): la entrada estaba poco dañada o el daño es desenfoque.`;
+  delta.classList.toggle("peor", d < 0);
+  delta.hidden = false;
+}
 
 function say(text, isError = false) {
   message.textContent = text;
@@ -45,6 +91,7 @@ async function loadExamples() {
     if (!items.length) return;
     const box = $("examples");
     for (const item of items) {
+      exampleIndex.set(item.name, item);
       const button = document.createElement("button");
       button.type = "button";
       button.title = item.name;
@@ -59,7 +106,7 @@ async function loadExamples() {
         box.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", "false"));
         button.setAttribute("aria-pressed", "true");
         const blob = await (await fetch(item.url)).blob();
-        setFile(new File([blob], item.name, { type: blob.type || "image/png" }));
+        setFile(new File([blob], item.name, { type: blob.type || "image/png" }), item);
       });
       box.append(button);
     }
@@ -69,13 +116,28 @@ async function loadExamples() {
   }
 }
 
-function setFile(file) {
+function setFile(file, example = null) {
   if (!file) return;
+  // Una foto del test arrastrada desde el explorador también se compara con su original.
+  if (!example && exampleIndex.has(file.name)) example = exampleIndex.get(file.name);
   if (!file.type.startsWith("image/")) {
     say("El archivo no es una imagen.", true);
     return;
   }
   currentFile = file;
+  currentExample = example && example.original_url ? example.name : null;
+  showOriginal(example ? example.original_url : null);
+  clearMetrics();
+  current.innerHTML = "";
+  const code = document.createElement("code");
+  code.textContent = file.name;
+  current.append("Foto: ", code);
+  current.hidden = false;
+  if (!example || !exampleIndex.has(file.name)) {
+    $("examples")
+      .querySelectorAll("button")
+      .forEach((b) => b.setAttribute("aria-pressed", "false"));
+  }
   before.src = URL.createObjectURL(file);
   after.removeAttribute("src");
   download.hidden = true;
@@ -90,6 +152,7 @@ async function restore() {
   say("Restaurando…");
   const body = new FormData();
   body.append("file", currentFile);
+  if (currentExample) body.append("example", currentExample);
   try {
     const res = await fetch("/api/restore", { method: "POST", body });
     if (!res.ok) {
@@ -97,6 +160,7 @@ async function restore() {
       throw new Error(detail.detail || `Error ${res.status}`);
     }
     const blob = await res.blob();
+    showMetrics(res.headers.get("X-Metricas"));
     if (afterUrl) URL.revokeObjectURL(afterUrl);
     afterUrl = URL.createObjectURL(blob);
     after.src = afterUrl;

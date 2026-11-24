@@ -24,7 +24,7 @@
           <small>PNG, JPG o WEBP · hasta 20 MB · el modelo trabaja a 256×256</small>
         </label>
         <div id="examples-box" hidden>
-          <p class="hint">o prueba con una imagen del split de prueba:</p>
+          <p class="hint">o elige una foto del conjunto de prueba (incluye su original para comparar):</p>
           <div id="examples" class="examples" role="list"></div>
         </div>
         <button id="restore" class="primary" type="button" disabled>Restaurar</button>
@@ -33,10 +33,12 @@
 
       <section class="panel" aria-labelledby="t-resultado">
         <h2 id="t-resultado">2. Compara</h2>
-        <div class="compare">
+        <p id="current" class="current" hidden></p>
+        <div id="compare" class="compare">
           <figure>
             <figcaption>Entrada</figcaption>
             <div class="frame"><img id="before" alt="Imagen de entrada" /></div>
+            <p id="m-before" class="metric"></p>
           </figure>
           <figure>
             <figcaption>Restaurada</figcaption>
@@ -44,8 +46,15 @@
               <img id="after" alt="Imagen restaurada" />
               <div id="spinner" class="spinner" hidden></div>
             </div>
+            <p id="m-after" class="metric"></p>
+          </figure>
+          <figure id="fig-original" hidden>
+            <figcaption>Original (referencia)</figcaption>
+            <div class="frame"><img id="original" alt="Fotografía original sin daño" /></div>
+            <p class="metric muted">la foto antes del daño</p>
           </figure>
         </div>
+        <p id="delta" class="delta" hidden></p>
         <a id="download" class="secondary" download="restaurada.png" hidden>Descargar PNG</a>
       </section>
     </main>
