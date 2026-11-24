@@ -197,13 +197,16 @@ def predict(
     quitar_puntos: bool = True,
     tta: bool = True,
     nitidez: float = 0.0,
+    mezcla: float = 1.0,
 ) -> tf.Tensor:
     """Generador sobre un lote en [-1, 1] con los pasos opcionales de la demo.
 
     1. Limpieza de polvo antes del generador (`src/gan/despeckle.py`), para que no lo copie.
     2. Generador, con TTA de 4 volteos si `tta`.
     3. Limpieza de polvo otra vez, por si alguno sobrevivió.
-    4. Máscara de enfoque si `nitidez > 0` (solo visual).
+    4. Mezcla con la entrada si `mezcla < 1`: `mezcla·salida + (1 − mezcla)·entrada`.
+       Frena la sobre-corrección en fotos poco dañadas (ver `docs/RESULTADOS.md` §7).
+    5. Máscara de enfoque si `nitidez > 0` (solo visual).
     """
     if quitar_puntos:
         from src.gan.despeckle import remove_specks
@@ -216,6 +219,8 @@ def predict(
     pred = generate(generator, tensor, tta=tta)
     if quitar_puntos:
         pred = tf.convert_to_tensor(limpiar(np.clip(pred.numpy(), -1.0, 1.0)), dtype=tf.float32)
+    if mezcla < 1.0:
+        pred = mezcla * pred + (1.0 - mezcla) * tf.cast(tensor, tf.float32)
     return sharpen(pred, nitidez) if nitidez > 0 else pred
 
 
@@ -227,6 +232,7 @@ def restore_image(
     quitar_puntos: bool = True,
     tta: bool = True,
     nitidez: float = 0.0,
+    mezcla: float = 1.0,
 ) -> Image.Image:
     """Restaura una imagen PIL de cualquier tamaño y formato.
 
@@ -235,7 +241,12 @@ def restore_image(
     """
     prepared = prepare_input(image, size)
     pred = predict(
-        generator, prepared.tensor, quitar_puntos=quitar_puntos, tta=tta, nitidez=nitidez
+        generator,
+        prepared.tensor,
+        quitar_puntos=quitar_puntos,
+        tta=tta,
+        nitidez=nitidez,
+        mezcla=mezcla,
     )
     square = tensor_to_image(pred).resize((prepared.side, prepared.side), Image.Resampling.BICUBIC)
     return square.crop(prepared.box)

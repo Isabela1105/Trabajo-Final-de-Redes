@@ -15,7 +15,7 @@
 | Dataset | 5.0 (pondera 4.0 si es público) | Dataset **propio**: 152 fotos fuente (100 DIV2K, 30 Pexels, 22 propias), 456 pares, split por foto fuente sin fuga, `check_dataset.py` = OK | `docs/DATASET.md`, `docs/dataset_stats.md` |
 | Arquitectura | 4.5 | U-Net 8 niveles (54.5 M parámetros) + PatchGAN 70×70; por qué cada pieza | `docs/ARQUITECTURA.md` |
 | Paso a paso | 4.5 | Pipeline reproducible: degradar → entrenar → elegir por validación → evaluar → demo | README §6–9 |
-| Métricas | 2.0 / 1.0 (otra tarea) | **21.30 dB, SSIM 0.7165, L1 0.0681**: +1.00 dB sobre la entrada (antes +0.37), mejor SSIM que la entrega anterior en las 45 fotos | `docs/RESULTADOS.md` §6 |
+| Métricas | 2.0 / 1.0 (otra tarea) | **21.30 dB, SSIM 0.7165, L1 0.0681**: +1.00 dB sobre la entrada (antes +0.37), mejor SSIM que la entrega anterior en las 45 fotos; ablación justa (§7.4) | `docs/RESULTADOS.md` §6–7 |
 | Análisis | 3.5 | Análisis de errores por nivel de daño y por tipo; comparación pareada con t; por qué la última época no es la mejor | `docs/RESULTADOS.md` §6.4 |
 | Demo | **0.0** | Demo web local funcionando, con original de referencia, PSNR/SSIM en vivo, limpieza de polvo y TTA | `docs/DEMO.md` |
 | Exposición | 3.5 | Todos dominan todo: banco de preguntas de la sección 6 | este documento |
@@ -199,9 +199,16 @@ al docente y revela huecos de comprensión.
     *Realzar nitidez* la hace más definida a la vista, pero baja PSNR y SSIM (también realza el
     ruido); por eso no entra en la tabla.
 
-27. **¿Y el discriminador?**
-    Gana muy pronto (pérdida cerca de 0): su señal es débil. Aun así, con 100 épocas y selección
-    por validación Pix2Pix ya supera a la U-Net solo L1 en las tres métricas.
+27. **¿Entonces la GAN sirve?**
+    Con el mismo protocolo, la U-Net solo L1 empata en PSNR y L1 y gana en SSIM (§7.4). Es lo
+    esperado: la pérdida adversarial busca realismo y bordes, no menor error por píxel (Isola et
+    al., 2017). Además el discriminador gana muy pronto (pérdida cerca de 0) y su señal es débil.
+    Elegimos Pix2Pix porque queda marginalmente mejor en validación, que es el criterio fijado.
+
+28. **¿Qué probaron que no funcionó?**
+    Pares sin daño para que no sobre-corrija: peor en validación y en prueba, se descartó (§7.1).
+    Mezclar salida y entrada: mejora pequeña y dudosa en validación, no se adoptó (§7.2). Reportar
+    lo que no funcionó también es parte del análisis.
 
 ### Participación y repo
 

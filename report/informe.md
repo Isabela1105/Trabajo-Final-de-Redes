@@ -266,6 +266,7 @@ orden alfabético y las 4 de menor PSNR, sin selección manual.
 | Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
 | Pix2Pix 20 épocas (v1.0.0) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
 | U-Net solo L1 (20 épocas) | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| U-Net solo L1 (mejor val., ép. 45) + TTA | 45 | 21.21 ± 2.22 | 0.7222 ± 0.1100 | 0.0694 ± 0.0249 |
 | Pix2Pix 100 épocas (mejor val., ép. 48) | 45 | 21.14 ± 2.08 | 0.7003 ± 0.1064 | 0.0690 ± 0.0220 |
 | **Pix2Pix 100 épocas (mejor val., ép. 48) + TTA** | 45 | 21.30 ± 2.15 | 0.7165 ± 0.1077 | 0.0681 ± 0.0236 |
 
@@ -321,14 +322,24 @@ ruido y los artefactos de cuadrícula. El TTA se eligió por su mejora en valida
 | Entrada sin restaurar | 20.30 | 0.6558 | 0.0749 |
 | Pix2Pix 20 épocas (entrega anterior) | 20.67 | 0.6835 | 0.0732 |
 | U-Net solo L1 (20 épocas) | 20.87 | 0.7011 | 0.0704 |
+| U-Net solo L1, mismo protocolo (ép. 45 + TTA) | 21.21 | **0.7222** | 0.0694 |
 | Pix2Pix 100 épocas, última época (Colab) | 20.41 | 0.6540 | 0.0759 |
 | Pix2Pix, mejor validación (época 48) | 21.14 | 0.7003 | 0.0690 |
-| **Pix2Pix, época 48 + TTA (vigente)** | **21.30** | **0.7165** | **0.0681** |
+| **Pix2Pix, época 48 + TTA (vigente)** | **21.30** | 0.7165 | **0.0681** |
 
 Frente a la foto dañada, el modelo vigente gana 1.00 dB y 0.061 de SSIM; la entrega anterior ganaba
 0.37 dB y 0.028. En comparación pareada con la entrega anterior mejora 0.63 dB de PSNR en promedio
-(t = 4.75) y obtiene mejor SSIM en las 45 imágenes. También supera a la U-Net solo L1 en las tres
-métricas (+0.43 dB, t = 3.90), aunque esa ablación solo tiene 20 épocas.
+(t = 4.75) y obtiene mejor SSIM en las 45 imágenes. Para una comparación justa, la U-Net solo L1 se
+entrenó con el mismo protocolo (selección por validación en la época 45 y TTA): obtiene 21.21 dB,
+0.7222 de SSIM y 0.0694 de L1. Las diferencias en PSNR y L1 no son significativas (t = 1.34 y
+−1.75), y la U-Net gana en SSIM (t = −6.09). Con el mismo entrenamiento, la pérdida adversarial no
+mejora las métricas de fidelidad, como ya reportan Isola et al.; su aporte es perceptual. Se
+mantuvo Pix2Pix porque queda marginalmente mejor en validación (L1 0.1369 frente a 0.1378).
+
+Se probaron además dos cambios que no se adoptaron porque no mejoraron la validación de forma
+evidente: agregar pares sin daño al entrenamiento (peor en validación y en prueba, incluso en las
+fotos poco dañadas) y mezclar la salida con la entrada (+0.1 dB en validación, pero con menor SSIM
+y mejora en menos de la mitad de las fotos).
 
 El análisis de errores muestra una correlación de −0.71 entre el PSNR de la entrada y la ganancia.
 Con entradas de menos de 18 dB el modelo gana 3.6 dB, y entre 18 y 22 dB, de 1.2 a 2.3 dB. Con
@@ -395,8 +406,9 @@ mantiene privado dentro del equipo (sección 3.5).
 2. Se implementó Pix2Pix completo en TensorFlow/Keras con pruebas automáticas de contratos.
 3. Con 20 épocas, Pix2Pix superaba a la foto sin restaurar solo por 0.37 dB y la ablación sin GAN
    le ganaba. Entrenando hasta 100 épocas y **eligiendo el modelo por validación** (época 48), más
-   TTA, llega a 21.30 dB, 0.7165 de SSIM y 0.0681 de L1: +1.00 dB sobre la entrada, mejor SSIM que
-   la entrega anterior en las 45 imágenes y mejor que la U-Net solo L1 en las tres métricas.
+   TTA, llega a 21.30 dB, 0.7165 de SSIM y 0.0681 de L1: +1.00 dB sobre la entrada y mejor SSIM que
+   la entrega anterior en las 45 imágenes. Con el mismo protocolo, la U-Net solo L1 empata en PSNR
+   y L1 y gana en SSIM: la GAN no mejora la fidelidad por píxel.
 4. La última época de una GAN no es el mejor modelo: la de 100 épocas quedó por debajo de la de 20.
    La selección por validación es lo que convierte el entrenamiento extra en mejora.
 5. El modelo corrige sobre todo color, contraste y rayones; sobre-corrige fotos poco dañadas y no

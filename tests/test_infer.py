@@ -194,3 +194,17 @@ def test_restore_image_with_all_options(trained_checkpoint: Path) -> None:
         generator, image, config.image_size, quitar_puntos=True, tta=True, nitidez=0.5
     )
     assert out.size == (32, 48)
+
+
+def test_mezcla_interpolates_between_output_and_input() -> None:
+    from src.gan.infer import predict
+
+    class Const(tf.keras.Model):
+        def call(self, x, training=False):
+            return tf.ones_like(x) * 0.5
+
+    x = tf.fill((1, 8, 8, 3), -0.5)
+    full = predict(Const(), x, quitar_puntos=False, tta=False).numpy()
+    mixed = predict(Const(), x, quitar_puntos=False, tta=False, mezcla=0.8).numpy()
+    np.testing.assert_allclose(full, 0.5)
+    np.testing.assert_allclose(mixed, 0.8 * 0.5 + 0.2 * -0.5, atol=1e-6)

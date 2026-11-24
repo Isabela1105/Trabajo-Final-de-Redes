@@ -120,6 +120,7 @@ a mano. Líneas base y protocolo: [`docs/ARQUITECTURA.md` §6](docs/ARQUITECTURA
 | Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
 | Pix2Pix 20 épocas (v1.0.0) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
 | U-Net solo L1 (20 épocas) | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| U-Net solo L1 (mejor val., ép. 45) + TTA | 45 | 21.21 ± 2.22 | 0.7222 ± 0.1100 | 0.0694 ± 0.0249 |
 | Pix2Pix 100 épocas (mejor val., ép. 48) | 45 | 21.14 ± 2.08 | 0.7003 ± 0.1064 | 0.0690 ± 0.0220 |
 | **Pix2Pix 100 épocas (mejor val., ép. 48) + TTA** | 45 | 21.30 ± 2.15 | 0.7165 ± 0.1077 | 0.0681 ± 0.0236 |
 
@@ -133,7 +134,9 @@ modelo de 20 épocas. Con la selección por validación:
 
 - Frente a la foto dañada: **+1.00 dB y +0.061 de SSIM** (la entrega anterior daba +0.37 y +0.028).
 - Frente a la entrega `v1.0.0`: +0.63 dB (t = 4.75 pareado), mejor SSIM en **las 45 fotos**.
-- Supera a la U-Net solo L1 en las tres métricas (+0.43 dB, mejor SSIM en 43 de 45).
+- Frente a la U-Net solo L1 **con el mismo protocolo** (100 épocas, selección por validación y TTA):
+  empate en PSNR y L1 (+0.09 dB, t = 1.3) y la U-Net gana en SSIM (+0.006, t = 6.1). La GAN no
+  mejora las métricas píxel a píxel; lo esperado según Isola et al. (2017).
 
 **Análisis de errores:** mejora todos los tipos de daño, sobre todo rayones, contraste y color
 (+2.0 a +2.8 dB), y menos JPEG, polvo y baja resolución. El modo de falla: **sobre-corrige fotos
@@ -162,7 +165,7 @@ python -m app.server --checkpoint outputs/base/checkpoints
 # abrir http://127.0.0.1:8000
 ```
 
-**Modelo vigente (100 épocas, época 48):** descargar `pix2pix_100ep_mejor.zip`, descomprimirlo en
+**Modelo vigente (100 épocas, época 48):** descargar [`pix2pix_100ep_mejor.zip`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/releases/download/v1.1.0/pix2pix_100ep_mejor.zip) (release `v1.1.0`), descomprimirlo en
 la raíz (queda `outputs/pix2pix_100ep_mejor/best/`) y usar
 `python -m app.server --checkpoint outputs/pix2pix_100ep_mejor/best`. La demo aplica por defecto
 limpieza de polvo y TTA; la casilla *Realzar nitidez* es opcional (más definida a la vista, baja

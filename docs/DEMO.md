@@ -10,7 +10,7 @@ modelo se carga desde una carpeta local y la página no usa CDNs.
 
 | Elemento | Dónde |
 |---|---|
-| Modelo vigente: `pix2pix_100ep_mejor.zip` (generador de la época 48, ≈ 210 MB) | Release del repositorio → descomprimir en la raíz: `outputs/pix2pix_100ep_mejor/best/` |
+| Modelo vigente: [`pix2pix_100ep_mejor.zip`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/releases/download/v1.1.0/pix2pix_100ep_mejor.zip) (generador de la época 48, ≈ 193 MB) | Release `v1.1.0` → descomprimir en la raíz: `outputs/pix2pix_100ep_mejor/best/` |
 | Modelo de la entrega `v1.0.0` (opcional) | `pix2pix_20ep.zip` del release `v1.0.0` → `outputs/base/checkpoints/` |
 | Dependencias | `pip install -r requirements.txt` |
 | Ejemplos del selector (opcional) | `data/processed/test/input/` (se genera con `scripts/build_dataset.py`) o `web/examples/` |
