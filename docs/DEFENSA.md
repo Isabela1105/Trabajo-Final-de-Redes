@@ -8,6 +8,18 @@
 - ¿Todos participaron y todos pueden explicar?
 - ¿El repositorio está ordenado y reproducible?
 
+### 1.1 Rúbrica de la entrega anterior y qué responde a cada punto
+
+| Componente | Nota anterior | Qué mostrar ahora | Dónde |
+|---|---|---|---|
+| Dataset | 5.0 (pondera 4.0 si es público) | Dataset **propio**: 152 fotos fuente (100 DIV2K, 30 Pexels, 22 propias), 456 pares, split por foto fuente sin fuga, `check_dataset.py` = OK | `docs/DATASET.md`, `docs/dataset_stats.md` |
+| Arquitectura | 4.5 | U-Net 8 niveles (54.5 M parámetros) + PatchGAN 70×70; por qué cada pieza | `docs/ARQUITECTURA.md` |
+| Paso a paso | 4.5 | Pipeline reproducible: degradar → entrenar → elegir por validación → evaluar → demo | README §6–9 |
+| Métricas | 2.0 / 1.0 (otra tarea) | **21.30 dB, SSIM 0.7165, L1 0.0681**: +1.00 dB sobre la entrada (antes +0.37), mejor SSIM que la entrega anterior en las 45 fotos | `docs/RESULTADOS.md` §6 |
+| Análisis | 3.5 | Análisis de errores por nivel de daño y por tipo; comparación pareada con t; por qué la última época no es la mejor | `docs/RESULTADOS.md` §6.4 |
+| Demo | **0.0** | Demo web local funcionando, con original de referencia, PSNR/SSIM en vivo, limpieza de polvo y TTA | `docs/DEMO.md` |
+| Exposición | 3.5 | Todos dominan todo: banco de preguntas de la sección 6 | este documento |
+
 **Riesgo principal:** el docente elige a un integrante al azar. Por eso **todos** deben preparar
 **todas** las secciones, no solo la propia.
 
@@ -22,7 +34,7 @@
 | 4–7 | Arquitectura | B | U-Net, skip connections, `ngf`, `tanh`. |
 | 7–9 | Discriminador y pérdidas | C | PatchGAN, BCE + L1, λ = 100. |
 | 9–11 | Entrenamiento | D | `train_step`, checkpoints, hiperparámetros, estabilidad. |
-| 11–14 | Resultados | E | PSNR/SSIM/L1, baselines, figuras, fallos. |
+| 11–14 | Resultados | E | Tabla final, 20 vs 100 épocas, selección por validación, TTA, análisis de errores. |
 | 14–16 | Demo y limitaciones | E + A | Demo web (FastAPI), ejemplos del test, alucinación, trabajo futuro. |
 | 16–20 | Preguntas | Todos | Responder con precisión y honestidad. |
 
@@ -54,7 +66,7 @@ llevan notas del orador en `docs/presentacion_notas.md`.
 
 ## 4. Demo: plan A, B y C
 
-- **Plan A:** demo web local (`python -m app.server --checkpoint outputs/base/checkpoints`) con
+- **Plan A:** demo web local (`python -m app.server --checkpoint outputs/pix2pix_100ep_mejor/best`) con
   el selector de ejemplos del test. Si falla el navegador, `python -m app.gradio_app` (respaldo).
 - **Plan B:** video/GIF pregrabado de la demo (30–60 s).
 - **Plan C:** galería de resultados precalculada en `docs/img/` y en las diapositivas.
@@ -156,6 +168,40 @@ al docente y revela huecos de comprensión.
 20. **¿Qué fallos encontraron?**
     Ejemplos: borra texturas finas, inventa detalles en zonas muy dañadas, color ligeramente
     distinto. Se documentan en la galería de fallos.
+
+### Nueva sustentación (las que más van a preguntar)
+
+21. **¿Cuántas épocas y cuántas imágenes?**
+    Objetivo 100 épocas; el modelo vigente es el de la **época 48**, la de menor L1 de
+    validación. Dataset: 152 fotos fuente × 3 variantes = **456 pares** (366 train, 45 val,
+    45 test), 256×256. Con lote 2 son 183 iteraciones por época.
+
+22. **¿Por qué no usan la época 100?**
+    Porque en una GAN la calidad oscila: la corrida que completó 100 épocas terminó en
+    20.41 dB en test, peor que la de 20 épocas (20.67). Se elige la época con mejor
+    **validación**; el test nunca se usa para elegir, solo para reportar.
+
+23. **¿Qué es TTA y por qué no es trampa?**
+    Se restaura la foto y sus 3 versiones volteadas y se promedian. No cambia el modelo ni ve el
+    original. Se decidió con validación (+0.05 dB, +0.014 SSIM) antes de mirar el test.
+
+24. **¿La mejora es real o es ruido?**
+    Comparación pareada por foto frente a la entrega anterior: +0.63 dB con t = 4.75, y mejor
+    SSIM en las 45 imágenes. Frente a la entrada: +1.00 dB.
+
+25. **¿Dónde falla?**
+    En fotos poco dañadas (entrada ≥ 22 dB) empeora 10 de 11 (−2.5 dB): nunca vio pares sin
+    daño y sobre-corrige color y brillo. Correlación entrada–ganancia: −0.71. Solución
+    propuesta: agregar pares limpio→limpio.
+
+26. **¿Por qué la imagen sigue borrosa?**
+    La red trabaja a 256×256 con pérdida L1, que promedia lo que no puede inferir. La casilla
+    *Realzar nitidez* la hace más definida a la vista, pero baja PSNR y SSIM (también realza el
+    ruido); por eso no entra en la tabla.
+
+27. **¿Y el discriminador?**
+    Gana muy pronto (pérdida cerca de 0): su señal es débil. Aun así, con 100 épocas y selección
+    por validación Pix2Pix ya supera a la U-Net solo L1 en las tres métricas.
 
 ### Participación y repo
 

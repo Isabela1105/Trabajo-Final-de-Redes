@@ -118,21 +118,33 @@ a mano. Líneas base y protocolo: [`docs/ARQUITECTURA.md` §6](docs/ARQUITECTURA
 |---|---|---|---|---|
 | Entrada (sin restaurar) | 45 | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
 | Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
-| **U-Net solo L1** | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
-| Pix2Pix (λ = 100) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
+| Pix2Pix 20 épocas (v1.0.0) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
+| U-Net solo L1 (20 épocas) | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| Pix2Pix 100 épocas (mejor val., ép. 48) | 45 | 21.14 ± 2.08 | 0.7003 ± 0.1064 | 0.0690 ± 0.0220 |
+| **Pix2Pix 100 épocas (mejor val., ép. 48) + TTA** | 45 | 21.30 ± 2.15 | 0.7165 ± 0.1077 | 0.0681 ± 0.0236 |
 
-_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test/summary.csv`._
+_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test_100ep/summary.csv`._
 <!-- RESULTADOS:FIN -->
 
-Pesos evaluados: corrida reproducida con `configs/base.yaml` (20 épocas), publicados en el
-release `v1.0.0`. Los dos modelos superan a la foto sin restaurar (Pix2Pix +0.37 dB, ablación
-+0.57 dB); la ablación sin GAN gana en las métricas píxel a píxel, como predice la teoría. Las
-mayores ganancias son en color y contraste; la baja resolución casi no se recupera. Análisis
-completo, desglose por degradación y curvas: [`docs/RESULTADOS.md`](docs/RESULTADOS.md).
+**Modelo vigente:** Pix2Pix con objetivo de 100 épocas, **elegido por la mejor L1 de validación
+(época 48)** y con **TTA** (promedio de la foto y sus 3 versiones volteadas). En una GAN la última
+época no es la mejor: una corrida completa de 100 en Colab terminó en 20.41 dB, por debajo del
+modelo de 20 épocas. Con la selección por validación:
 
-![Resultados en test](docs/img/results_grid.png)
+- Frente a la foto dañada: **+1.00 dB y +0.061 de SSIM** (la entrega anterior daba +0.37 y +0.028).
+- Frente a la entrega `v1.0.0`: +0.63 dB (t = 4.75 pareado), mejor SSIM en **las 45 fotos**.
+- Supera a la U-Net solo L1 en las tres métricas (+0.43 dB, mejor SSIM en 43 de 45).
 
-Peores casos (sin elegir a mano): [`docs/img/failures.png`](docs/img/failures.png)
+**Análisis de errores:** mejora todos los tipos de daño, sobre todo rayones, contraste y color
+(+2.0 a +2.8 dB), y menos JPEG, polvo y baja resolución. El modo de falla: **sobre-corrige fotos
+poco dañadas** (entrada ≥ 22 dB: −2.5 dB en 10 de 11) porque nunca vio pares sin daño. Todo en
+[`docs/RESULTADOS.md` §6](docs/RESULTADOS.md#6-nueva-sustentación-100-épocas-selección-por-validación-y-tta).
+
+![Curvas 100 épocas](docs/img/curvas_100ep.png)
+
+![Resultados en test](docs/img/results_grid_100ep.png)
+
+Peores casos (sin elegir a mano): [`docs/img/failures_100ep.png`](docs/img/failures_100ep.png)
 
 ---
 
@@ -149,6 +161,12 @@ y descomprimirlo en la raíz del repositorio: queda `outputs/base/checkpoints/` 
 python -m app.server --checkpoint outputs/base/checkpoints
 # abrir http://127.0.0.1:8000
 ```
+
+**Modelo vigente (100 épocas, época 48):** descargar `pix2pix_100ep_mejor.zip`, descomprimirlo en
+la raíz (queda `outputs/pix2pix_100ep_mejor/best/`) y usar
+`python -m app.server --checkpoint outputs/pix2pix_100ep_mejor/best`. La demo aplica por defecto
+limpieza de polvo y TTA; la casilla *Realzar nitidez* es opcional (más definida a la vista, baja
+un poco el PSNR).
 
 Respaldo con Gradio: `python -m app.gradio_app --checkpoint outputs/base/checkpoints`.
 API, Colab y plan A/B/C: [`docs/DEMO.md`](docs/DEMO.md).
@@ -272,8 +290,9 @@ python -m src.gan.infer --checkpoint outputs/base/checkpoints \
   --input ruta/a/foto.jpg --output ruta/a/restaurada.png
 ```
 
-La limpieza de polvo (`src/gan/despeckle.py`) sube el PSNR de las fotos con polvo de 20.52 a
-20.82 dB; la tabla oficial no la usa. Detalle en `docs/RESULTADOS.md` §2.5.
+Por defecto aplica limpieza de polvo y TTA (`--sin-limpieza`, `--sin-tta` para desactivarlos) y
+acepta `--nitidez 0.5` para realzar bordes. La limpieza sube el PSNR de las fotos con polvo del
+modelo de 20 épocas de 20.52 a 20.82 dB. Detalle en `docs/RESULTADOS.md` §2.5.
 
 Métricas: PSNR, SSIM y L1 en `[0, 1]` por imagen, media ± desviación estándar. FID opcional
 con `--fid`. Atajos: `make eval`, `make results`, `make demo`.

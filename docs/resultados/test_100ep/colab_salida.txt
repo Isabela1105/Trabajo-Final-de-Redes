@@ -1,0 +1,136 @@
+# Corrida 2, primera parte (épocas 3-67; antes, épocas 0-2 en otra ejecución de la celda)
+[resume] Estado restaurado desde /content/drive/MyDrive/pix2pix_100ep_v2/checkpoints/ckpt-2; continuando en época 3.
+época 003 | D 0.0092 | G 16.7009 | L1 val 0.1646 | mejor hasta ahora
+época 004 | D 0.1327 | G 16.1120 | L1 val 0.1610 | mejor hasta ahora
+época 005 | D 0.0253 | G 15.3934 | L1 val 0.1573 | mejor hasta ahora
+época 006 | D 0.0007 | G 15.3284 | L1 val 0.1624
+época 007 | D 0.0006 | G 14.5327 | L1 val 0.1588
+época 008 | D 0.0112 | G 14.5284 | L1 val 0.1605
+época 009 | D 0.0019 | G 13.9743 | L1 val 0.1792
+época 010 | D 0.0057 | G 13.9673 | L1 val 0.1587
+época 011 | D 0.0703 | G 14.1395 | L1 val 0.1554 | mejor hasta ahora
+época 012 | D 0.0042 | G 13.3675 | L1 val 0.1603
+época 013 | D 0.0169 | G 13.4989 | L1 val 0.1502 | mejor hasta ahora
+época 014 | D 0.0125 | G 13.4673 | L1 val 0.1491 | mejor hasta ahora
+época 015 | D 0.0008 | G 13.3380 | L1 val 0.1539
+época 016 | D 0.0057 | G 13.4569 | L1 val 0.1534
+época 017 | D 0.0001 | G 12.5738 | L1 val 0.1462 | mejor hasta ahora
+época 018 | D 0.0199 | G 13.0952 | L1 val 0.1547
+época 019 | D 0.0002 | G 12.8049 | L1 val 0.1449 | mejor hasta ahora
+época 020 | D 0.0001 | G 12.4086 | L1 val 0.1429 | mejor hasta ahora
+época 021 | D 0.0001 | G 12.4968 | L1 val 0.1427 | mejor hasta ahora
+época 022 | D 0.0973 | G 12.8939 | L1 val 0.1481
+época 023 | D 0.0036 | G 12.3795 | L1 val 0.1409 | mejor hasta ahora
+época 024 | D 0.0002 | G 11.9634 | L1 val 0.1446
+época 025 | D 0.0428 | G 12.3800 | L1 val 0.1480
+época 026 | D 0.0039 | G 12.1768 | L1 val 0.1472
+época 027 | D 0.0465 | G 12.0790 | L1 val 0.1426
+época 028 | D 0.0000 | G 11.6728 | L1 val 0.1419
+época 029 | D 0.0000 | G 11.6159 | L1 val 0.1506
+época 030 | D 0.0309 | G 12.1903 | L1 val 0.1420
+época 031 | D 0.0546 | G 12.2438 | L1 val 0.1424
+época 032 | D 0.0646 | G 12.2813 | L1 val 0.1420
+época 033 | D 0.0001 | G 11.6932 | L1 val 0.1428
+época 034 | D 0.0184 | G 11.4883 | L1 val 0.1436
+época 035 | D 0.0184 | G 11.4610 | L1 val 0.1425
+época 036 | D 0.0001 | G 11.2920 | L1 val 0.1407 | mejor hasta ahora
+época 037 | D 0.0000 | G 11.1391 | L1 val 0.1423
+época 038 | D 0.0064 | G 12.0405 | L1 val 0.1422
+época 039 | D 0.0000 | G 11.2805 | L1 val 0.1432
+época 040 | D 0.0000 | G 11.0804 | L1 val 0.1397 | mejor hasta ahora
+época 041 | D 0.0000 | G 10.7433 | L1 val 0.1395 | mejor hasta ahora
+época 042 | D 0.0000 | G 10.6973 | L1 val 0.1397
+época 043 | D 0.0000 | G 10.6513 | L1 val 0.1429
+época 044 | D 0.1311 | G 11.8998 | L1 val 0.1440
+época 045 | D 0.0200 | G 11.2634 | L1 val 0.1420
+época 046 | D 0.0057 | G 10.5633 | L1 val 0.1406
+época 047 | D 0.0069 | G 10.8565 | L1 val 0.1406
+época 048 | D 0.0294 | G 10.6907 | L1 val 0.1395
+época 049 | D 0.0000 | G 10.6829 | L1 val 0.1438
+época 050 | D 0.0514 | G 10.6704 | L1 val 0.1433
+época 051 | D 0.0065 | G 10.4009 | L1 val 0.1417
+época 052 | D 0.0005 | G 10.3549 | L1 val 0.1394 | mejor hasta ahora
+época 053 | D 0.0352 | G 11.6689 | L1 val 0.1482
+época 054 | D 0.0125 | G 10.9793 | L1 val 0.1375 | mejor hasta ahora
+época 055 | D 0.0017 | G 10.1367 | L1 val 0.1380
+época 056 | D 0.0088 | G 10.3207 | L1 val 0.1418
+época 057 | D 0.0021 | G 10.0068 | L1 val 0.1425
+época 058 | D 0.0000 | G 9.9265 | L1 val 0.1379
+época 059 | D 0.0105 | G 10.3242 | L1 val 0.1413
+época 060 | D 0.0000 | G 9.8596 | L1 val 0.1375
+época 061 | D 0.0262 | G 10.1426 | L1 val 0.1384
+época 062 | D 0.0000 | G 9.7035 | L1 val 0.1365 | mejor hasta ahora
+época 063 | D 0.0000 | G 9.5768 | L1 val 0.1368
+época 064 | D 0.0000 | G 9.5970 | L1 val 0.1369
+época 065 | D 0.0000 | G 9.5220 | L1 val 0.1414
+época 066 | D 0.0000 | G 9.4681 | L1 val 0.1398
+época 067 | D 0.0000 | G 9.4487 | L1 val 0.1381
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: {{function_node __wrapped__SaveV2_dtypes_199_device_/job:localhost/replica:0/task:0/device:CPU:0}} /content/drive/MyDrive/pix2pix_100ep_v2/checkpoints/ckpt-68_temp/part-00000-of-00001.data-00000-of-00001.tempstate17549455680146796324; No space left on device [Op:SaveV2]
+{
+  "epoch": 62,
+  "val_l1": 0.13652926359487616,
+  "val_psnr": 21.17569475588591,
+  "val_ssim": 0.5539526174897733
+}
+[eval] Entrada (sin restaurar)      n=45  PSNR 20.30±2.68 dB | SSIM 0.6558±0.1789 | L1 0.0749±0.0279
+[eval] Filtro de mediana 3x3        n=45  PSNR 20.05±2.26 dB | SSIM 0.6655±0.1076 | L1 0.0755±0.0264
+[eval] Pix2Pix última época         n=45  PSNR 20.89±2.19 dB | SSIM 0.7026±0.1073 | L1 0.0716±0.0225
+[eval] Pix2Pix (λ = 100)            n=45  PSNR 20.77±2.12 dB | SSIM 0.7006±0.1060 | L1 0.0727±0.0224
+[eval] Pix2Pix + limpieza de puntos n=45  PSNR 20.68±2.10 dB | SSIM 0.7015±0.1043 | L1 0.0730±0.0228
+[eval] Resultados en /content/drive/MyDrive/pix2pix_100ep_v2/eval
+## Pix2Pix (λ = 100): n = 45, mejora en 29
+Correlación PSNR de la entrada vs ganancia: -0.71
+| PSNR de la entrada | n | Ganancia PSNR (dB) | Ganancia SSIM | Mejora en |
+|---|---|---|---|---|
+| < 18 dB | 6 | +2.63 | +0.043 | 6 de 6 |
+| 18–20 dB | 17 | +2.03 | +0.104 | 15 de 17 |
+| 20–22 dB | 11 | +0.61 | +0.012 | 7 de 11 |
+| ≥ 22 dB | 11 | -3.26 | -0.012 | 1 de 11 |
+| Degradación | n | Ganancia PSNR (dB) | Mejora en |
+|---|---|---|---|
+| scratches | 6 | +2.37 | 6 de 6 |
+| fade | 25 | +1.44 | 21 de 25 |
+| contrast | 19 | +1.36 | 14 de 19 |
+| noise | 20 | +1.00 | 13 de 20 |
+| downscale | 15 | +0.56 | 10 de 15 |
+| blur | 25 | +0.50 | 17 de 25 |
+| dust | 19 | +0.49 | 12 de 19 |
+| jpeg | 26 | +0.24 | 16 de 26 |
+
+# Corrida 2, segunda parte (épocas 68-70)
+[resume] AVISO: el YAML cambió desde el checkpoint; se reanuda con la config actual.
+[resume] Estado restaurado desde /content/drive/MyDrive/pix2pix_100ep_v2/checkpoints/ckpt-67; continuando en época 68.
+época 068 | D 0.0033 | G 9.5602 | L1 val 0.1410
+época 069 | D 0.0610 | G 10.7761 | L1 val 0.1403
+época 070 | D 0.0482 | G 10.4172 | L1 val 0.1404
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: {{function_node __wrapped__SaveV2_dtypes_199_device_/job:localhost/replica:0/task:0/device:CPU:0}} /content/drive/MyDrive/pix2pix_100ep_v2/checkpoints/ckpt-71_temp/part-00000-of-00001.data-00000-of-00001.tempstate981223336404675361; No space left on device [Op:SaveV2]
+{
+  "epoch": 62,
+  "val_l1": 0.13652926359487616,
+  "val_psnr": 21.17569475588591,
+  "val_ssim": 0.5539526174897733
+}
+[eval] Entrada (sin restaurar)      n=45  PSNR 20.30±2.68 dB | SSIM 0.6558±0.1789 | L1 0.0749±0.0279
+[eval] Filtro de mediana 3x3        n=45  PSNR 20.05±2.26 dB | SSIM 0.6655±0.1076 | L1 0.0755±0.0264
+[eval] Pix2Pix última época         n=45  PSNR 20.92±2.03 dB | SSIM 0.6833±0.1049 | L1 0.0708±0.0206
+[eval] Pix2Pix (λ = 100)            n=45  PSNR 20.77±2.12 dB | SSIM 0.7006±0.1060 | L1 0.0727±0.0224
+[eval] Pix2Pix + limpieza de puntos n=45  PSNR 20.68±2.10 dB | SSIM 0.7015±0.1043 | L1 0.0730±0.0228
+[eval] Resultados en /content/drive/MyDrive/pix2pix_100ep_v2/eval
+## Pix2Pix (λ = 100): n = 45, mejora en 29
+Correlación PSNR de la entrada vs ganancia: -0.71
+| PSNR de la entrada | n | Ganancia PSNR (dB) | Ganancia SSIM | Mejora en |
+|---|---|---|---|---|
+| < 18 dB | 6 | +2.63 | +0.043 | 6 de 6 |
+| 18–20 dB | 17 | +2.03 | +0.104 | 15 de 17 |
+| 20–22 dB | 11 | +0.61 | +0.012 | 7 de 11 |
+| ≥ 22 dB | 11 | -3.26 | -0.012 | 1 de 11 |
+| Degradación | n | Ganancia PSNR (dB) | Mejora en |
+|---|---|---|---|
+| scratches | 6 | +2.37 | 6 de 6 |
+| fade | 25 | +1.44 | 21 de 25 |
+| contrast | 19 | +1.36 | 14 de 19 |
+| noise | 20 | +1.00 | 13 de 20 |
+| downscale | 15 | +0.56 | 10 de 15 |
+| blur | 25 | +0.50 | 17 de 25 |
+| dust | 19 | +0.49 | 12 de 19 |
+| jpeg | 26 | +0.24 | 16 de 26 |

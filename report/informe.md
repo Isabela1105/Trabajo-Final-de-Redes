@@ -12,7 +12,7 @@ lang: es
 ---
 
 **Repositorio:** <https://github.com/Isabela1105/Trabajo-Final-de-Redes>
-**Tag de resultados:** `v1.0.0`
+**Tag de resultados:** `v1.0.0` (20 épocas); modelo vigente: 100 épocas, época 48 + TTA (§6.7)
 
 ## Resumen
 
@@ -264,10 +264,12 @@ orden alfabético y las 4 de menor PSNR, sin selección manual.
 |---|---|---|---|---|
 | Entrada (sin restaurar) | 45 | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
 | Filtro de mediana 3x3 | 45 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
-| **U-Net solo L1** | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
-| Pix2Pix (λ = 100) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
+| Pix2Pix 20 épocas (v1.0.0) | 45 | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
+| U-Net solo L1 (20 épocas) | 45 | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| Pix2Pix 100 épocas (mejor val., ép. 48) | 45 | 21.14 ± 2.08 | 0.7003 ± 0.1064 | 0.0690 ± 0.0220 |
+| **Pix2Pix 100 épocas (mejor val., ép. 48) + TTA** | 45 | 21.30 ± 2.15 | 0.7165 ± 0.1077 | 0.0681 ± 0.0236 |
 
-_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test/summary.csv`._
+_Split `test`, métricas en [0, 1] por imagen completa (media ± std). Fuente: `docs/resultados/test_100ep/summary.csv`._
 <!-- RESULTADOS:FIN -->
 
 ### 6.4 Resultados cualitativos
@@ -299,13 +301,53 @@ misma foto (flores sobre cielo azul), donde el ruido sobre una zona lisa deja te
 En las 12 fotografías antiguas reales, el modelo sube el contraste y atenúa grietas finas, pero no
 rellena roturas, manchas ni partes faltantes, que no están entre las degradaciones de entrenamiento.
 
+
+### 6.7 Nueva sustentación: 100 épocas, selección por validación y TTA
+
+Se volvió a entrenar Pix2Pix con los mismos datos, arquitectura e hiperparámetros, con un objetivo
+de 100 épocas y sin parada temprana. Una corrida en Colab (GPU T4) completó las 100 épocas, pero su
+última época dio 20.41 dB y 0.654 de SSIM en prueba, por debajo del modelo de 20 épocas. En una GAN
+la calidad no sube de forma monótona: la L1 de validación oscila de una época a otra porque el
+generador y el discriminador se persiguen. Por eso el entrenamiento guarda ahora aparte el
+generador con menor L1 de validación (`best/`), y el conjunto de prueba solo se usa para reportar.
+
+El modelo vigente continúa la corrida de 20 épocas; su mejor validación fue en la época 48 (21.13 dB
+y 0.554 de SSIM en validación) y las 13 épocas siguientes no la superaron. A la inferencia se añadió
+TTA: se restaura la foto y sus tres versiones volteadas y se promedian las salidas, lo que reduce el
+ruido y los artefactos de cuadrícula. El TTA se eligió por su mejora en validación.
+
+| Modelo (prueba, 45 imágenes) | PSNR (dB) | SSIM | L1 |
+|---|---|---|---|
+| Entrada sin restaurar | 20.30 | 0.6558 | 0.0749 |
+| Pix2Pix 20 épocas (entrega anterior) | 20.67 | 0.6835 | 0.0732 |
+| U-Net solo L1 (20 épocas) | 20.87 | 0.7011 | 0.0704 |
+| Pix2Pix 100 épocas, última época (Colab) | 20.41 | 0.6540 | 0.0759 |
+| Pix2Pix, mejor validación (época 48) | 21.14 | 0.7003 | 0.0690 |
+| **Pix2Pix, época 48 + TTA (vigente)** | **21.30** | **0.7165** | **0.0681** |
+
+Frente a la foto dañada, el modelo vigente gana 1.00 dB y 0.061 de SSIM; la entrega anterior ganaba
+0.37 dB y 0.028. En comparación pareada con la entrega anterior mejora 0.63 dB de PSNR en promedio
+(t = 4.75) y obtiene mejor SSIM en las 45 imágenes. También supera a la U-Net solo L1 en las tres
+métricas (+0.43 dB, t = 3.90), aunque esa ablación solo tiene 20 épocas.
+
+El análisis de errores muestra una correlación de −0.71 entre el PSNR de la entrada y la ganancia.
+Con entradas de menos de 18 dB el modelo gana 3.6 dB, y entre 18 y 22 dB, de 1.2 a 2.3 dB. Con
+entradas de 22 dB o más empeora 10 de 11 imágenes (−2.5 dB): el entrenamiento solo incluyó pares
+dañados, así que nunca aprendió a dejar casi intacta una foto limpia. Por tipo de daño, la mejora es
+mayor en rayones (+2.8 dB), contraste (+2.0 dB) y desvanecido (+2.0 dB), y menor en JPEG (+0.9 dB)
+y polvo (+0.8 dB). La salida sigue siendo suave. Una máscara de enfoque la hace más definida a la
+vista, pero baja el PSNR y el SSIM con cualquier intensidad probada, por lo que solo se ofrece como
+opción en la demo.
+
+![Modelo vigente en el split de prueba: entrada, mediana, 20 épocas, U-Net solo L1, época 48, época 48 + TTA y objetivo.](../docs/img/results_grid_100ep.png)
+
 ## 7. Aplicación y demo
 
 ### 7.1 Cómo ejecutar
 
 ```bash
 pip install -r requirements.txt
-python -m app.server --checkpoint outputs/base/checkpoints
+python -m app.server --checkpoint outputs/pix2pix_100ep_mejor/best
 # abrir http://127.0.0.1:8000
 ```
 
@@ -351,13 +393,17 @@ mantiene privado dentro del equipo (sección 3.5).
 
 1. Se construyó un dataset propio y reproducible de 456 pares sin fuga entre splits.
 2. Se implementó Pix2Pix completo en TensorFlow/Keras con pruebas automáticas de contratos.
-3. En el test, Pix2Pix supera a la foto sin restaurar (20.67 frente a 20.30 dB; SSIM 0.684 frente
-   a 0.656), pero la ablación sin GAN obtiene mejores métricas (20.87 dB; SSIM 0.701): PSNR y SSIM
-   premian la fidelidad que optimiza L1, no el realismo que aporta el discriminador.
-4. El modelo corrige sobre todo color y contraste; no recupera nitidez perdida ni daños reales
-   fuera de las 8 degradaciones sintéticas. Más épocas, un discriminador menos dominante y pares
-   reales escaneados son los siguientes pasos.
-5. La demo web restaura fotos de cualquier tamaño y formato en local.
+3. Con 20 épocas, Pix2Pix superaba a la foto sin restaurar solo por 0.37 dB y la ablación sin GAN
+   le ganaba. Entrenando hasta 100 épocas y **eligiendo el modelo por validación** (época 48), más
+   TTA, llega a 21.30 dB, 0.7165 de SSIM y 0.0681 de L1: +1.00 dB sobre la entrada, mejor SSIM que
+   la entrega anterior en las 45 imágenes y mejor que la U-Net solo L1 en las tres métricas.
+4. La última época de una GAN no es el mejor modelo: la de 100 épocas quedó por debajo de la de 20.
+   La selección por validación es lo que convierte el entrenamiento extra en mejora.
+5. El modelo corrige sobre todo color, contraste y rayones; sobre-corrige fotos poco dañadas y no
+   recupera la nitidez perdida. Los siguientes pasos son pares limpio→limpio en el entrenamiento,
+   un discriminador menos dominante y pares reales escaneados.
+6. La demo web restaura fotos de cualquier tamaño y formato en local, con limpieza de polvo, TTA
+   y comparación contra la original con PSNR y SSIM.
 
 ## 10. Referencias
 

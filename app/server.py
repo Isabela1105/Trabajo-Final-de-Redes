@@ -42,7 +42,8 @@ MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
 # scripts/build_dataset.py y no se suben a git); si no existen, web/examples/.
 DEFAULT_EXAMPLE_DIRS = (REPO_ROOT / "data" / "processed" / "test" / "input", WEB_DIR / "examples")
 EXAMPLE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
-MAX_EXAMPLES = 60  # alcanza para los 45 pares de test
+MAX_EXAMPLES = 60
+NITIDEZ = 0.5  # intensidad de la casilla «Realzar nitidez» (máscara de enfoque)  # alcanza para los 45 pares de test
 
 
 def find_examples(directories: tuple[Path, ...] | list[Path]) -> dict[str, Path]:
@@ -165,6 +166,7 @@ def create_app(
         file: UploadFile = File(...),  # noqa: B008
         example: str | None = Form(None),  # noqa: B008
         limpiar: bool = Form(True),  # noqa: B008
+        nitidez: bool = Form(False),  # noqa: B008
     ) -> Response:
         """Devuelve el PNG restaurado.
 
@@ -185,7 +187,13 @@ def create_app(
             raise HTTPException(status_code=415, detail="No es una imagen válida.") from error
 
         generator = holder.get()
-        restored = restore_image(generator, image, holder.image_size, quitar_puntos=limpiar)
+        restored = restore_image(
+            generator,
+            image,
+            holder.image_size,
+            quitar_puntos=limpiar,
+            nitidez=NITIDEZ if nitidez else 0.0,
+        )
         buffer = io.BytesIO()
         restored.save(buffer, format="PNG")
         headers = {}

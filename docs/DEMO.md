@@ -10,7 +10,8 @@ modelo se carga desde una carpeta local y la página no usa CDNs.
 
 | Elemento | Dónde |
 |---|---|
-| Carpeta `checkpoints/` del entrenamiento (`ckpt-N.index`, `ckpt-N.data-*`, `config.yaml`, `metadata.json`) | Drive del equipo → `outputs/base/checkpoints/` |
+| Modelo vigente: `pix2pix_100ep_mejor.zip` (generador de la época 48, ≈ 210 MB) | Release del repositorio → descomprimir en la raíz: `outputs/pix2pix_100ep_mejor/best/` |
+| Modelo de la entrega `v1.0.0` (opcional) | `pix2pix_20ep.zip` del release `v1.0.0` → `outputs/base/checkpoints/` |
 | Dependencias | `pip install -r requirements.txt` |
 | Ejemplos del selector (opcional) | `data/processed/test/input/` (se genera con `scripts/build_dataset.py`) o `web/examples/` |
 
@@ -19,9 +20,9 @@ Los pesos **no** se suben a git (`.gitignore` bloquea `outputs/` y `checkpoints/
 ## 2. Ejecutar en local (plan A de la defensa)
 
 ```bash
-# 1. Copiar la carpeta de checkpoints del Drive a outputs/base/checkpoints/
+# 1. Descomprimir pix2pix_100ep_mejor.zip en la raíz del repositorio
 # 2. Levantar el servidor
-python -m app.server --checkpoint outputs/base/checkpoints
+python -m app.server --checkpoint outputs/pix2pix_100ep_mejor/best
 # 3. Abrir http://127.0.0.1:8000
 ```
 
@@ -47,7 +48,7 @@ uvicorn app.server:app --port 8000
 | `GET` | `/api/examples` | Lista de ejemplos del selector. |
 | `GET` | `/api/examples/{nombre}` | Imagen de ejemplo (solo archivos del índice). |
 | `GET` | `/api/examples/{nombre}/original` | Original sin daño del ejemplo (si existe `target/`). |
-| `POST` | `/api/restore` | `multipart/form-data` con `file` (y opcionales `example` y `limpiar`, `true` por defecto); responde `image/png`. Con `example`, la cabecera `X-Metricas` trae PSNR/SSIM de entrada y restaurada frente a la original. |
+| `POST` | `/api/restore` | `multipart/form-data` con `file` (y opcionales `example`, `limpiar` —`true` por defecto— y `nitidez` —`false` por defecto—); responde `image/png`. Con `example`, la cabecera `X-Metricas` trae PSNR/SSIM de entrada y restaurada frente a la original. |
 
 Errores: `400` archivo vacío, `413` más de 20 MB, `415` no es imagen, `503` sin modelo.
 
@@ -64,8 +65,11 @@ curl -F "file=@foto.jpg" http://127.0.0.1:8000/api/restore -o restaurada.png
 3. Se rellena por reflexión hasta quedar cuadrada, se lleva a 256×256 y se normaliza a `[-1, 1]`.
 4. Si la casilla *Quitar puntos de polvo* está marcada (por defecto), se borran las motas
    negras y blancas aisladas (`src/gan/despeckle.py`).
-5. El generador predice y se vuelve a limpiar por si quedó alguna mota.
-6. La salida se desnormaliza, se recorta el relleno y vuelve al tamaño de entrada (acotado).
+5. El generador predice con **TTA**: restaura la foto y sus 3 versiones volteadas y promedia
+   (menos ruido y artefactos; +0.16 dB y +0.016 SSIM en test). Se vuelve a limpiar el polvo.
+6. Si la casilla *Realzar nitidez* está marcada, se aplica una máscara de enfoque (0.5). Se ve
+   más definida, pero baja PSNR/SSIM porque también realza el ruido.
+7. La salida se desnormaliza, se recorta el relleno y vuelve al tamaño de entrada (acotado).
 
 Así una foto vertical de celular no sale estirada ni rotada.
 

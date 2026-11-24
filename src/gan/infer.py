@@ -149,37 +149,94 @@ def tensor_to_image(tensor: tf.Tensor) -> Image.Image:
     return Image.fromarray(array, mode="RGB")
 
 
-def predict(
-    generator: tf.keras.Model, tensor: tf.Tensor, *, quitar_puntos: bool = True
-) -> tf.Tensor:
-    """Generador sobre un lote en [-1, 1], con limpieza de polvo antes y después (opcional).
+def generate(generator: tf.keras.Model, tensor: tf.Tensor, *, tta: bool = False) -> tf.Tensor:
+    """Generador sobre un lote en [-1, 1]. `tta=True` promedia las 4 versiones volteadas.
 
-    La limpieza (`src/gan/despeckle.py`) quita puntos aislados negros o blancos: antes del
-    generador, para que no los copie; después, por si alguno sobrevivió.
+    Test-time augmentation: se restaura la imagen original, volteada en horizontal, en vertical
+    y en ambos ejes; cada salida se devuelve a su orientación y se promedian. Los errores de cada
+    pasada no coinciden, así que el promedio tiene menos ruido y artefactos de cuadrícula. Se
+    eligió con el split de validación (+0.05 dB, +0.014 SSIM) y no con el de prueba.
     """
-    if not quitar_puntos:
+    tensor = tf.convert_to_tensor(tensor, dtype=tf.float32)
+    if not tta:
         return tf.cast(generator(tensor, training=False), tf.float32)
-    from src.gan.despeckle import remove_specks
+    total = tf.zeros_like(tensor)
+    for axes in ((), (2,), (1,), (1, 2)):
+        flipped = tf.reverse(tensor, axis=list(axes)) if axes else tensor
+        out = tf.cast(generator(flipped, training=False), tf.float32)
+        total += tf.reverse(out, axis=list(axes)) if axes else out
+    return total / 4.0
 
-    def limpiar(batch: np.ndarray) -> np.ndarray:
-        unit = (np.asarray(batch, dtype=np.float32) + 1.0) / 2.0
-        return np.stack([remove_specks(img)[0] for img in unit]) * 2.0 - 1.0
 
-    cleaned = tf.convert_to_tensor(limpiar(tensor), dtype=tf.float32)
-    pred = tf.cast(generator(cleaned, training=False), tf.float32)
-    return tf.convert_to_tensor(limpiar(np.clip(pred.numpy(), -1.0, 1.0)), dtype=tf.float32)
+def sharpen(tensor: tf.Tensor, amount: float, sigma: float = 1.0) -> tf.Tensor:
+    """Máscara de enfoque (unsharp mask) sobre un lote en [-1, 1]: x + amount·(x − blur(x)).
+
+    Solo mejora la nitidez **a la vista**: en validación y prueba baja el PSNR y el SSIM con
+    cualquier intensidad, porque también realza el ruido. Por eso es opcional (demo) y la tabla
+    de resultados no la usa.
+    """
+    if amount <= 0:
+        return tf.convert_to_tensor(tensor, dtype=tf.float32)
+    radius = max(1, int(round(3 * sigma)))
+    x = np.arange(-radius, radius + 1, dtype=np.float32)
+    g = np.exp(-(x**2) / (2 * sigma**2))
+    g /= g.sum()
+    kernel = (np.outer(g, g)[:, :, None, None] * np.eye(3, dtype=np.float32)[None, None]).astype(
+        np.float32
+    )
+    t = tf.convert_to_tensor(tensor, dtype=tf.float32)
+    padded = tf.pad(t, [[0, 0], [radius, radius], [radius, radius], [0, 0]], mode="REFLECT")
+    blurred = tf.nn.conv2d(padded, kernel, strides=1, padding="VALID")
+    return tf.clip_by_value(t + amount * (t - blurred), -1.0, 1.0)
+
+
+def predict(
+    generator: tf.keras.Model,
+    tensor: tf.Tensor,
+    *,
+    quitar_puntos: bool = True,
+    tta: bool = True,
+    nitidez: float = 0.0,
+) -> tf.Tensor:
+    """Generador sobre un lote en [-1, 1] con los pasos opcionales de la demo.
+
+    1. Limpieza de polvo antes del generador (`src/gan/despeckle.py`), para que no lo copie.
+    2. Generador, con TTA de 4 volteos si `tta`.
+    3. Limpieza de polvo otra vez, por si alguno sobrevivió.
+    4. Máscara de enfoque si `nitidez > 0` (solo visual).
+    """
+    if quitar_puntos:
+        from src.gan.despeckle import remove_specks
+
+        def limpiar(batch: np.ndarray) -> np.ndarray:
+            unit = (np.asarray(batch, dtype=np.float32) + 1.0) / 2.0
+            return np.stack([remove_specks(img)[0] for img in unit]) * 2.0 - 1.0
+
+        tensor = tf.convert_to_tensor(limpiar(tensor), dtype=tf.float32)
+    pred = generate(generator, tensor, tta=tta)
+    if quitar_puntos:
+        pred = tf.convert_to_tensor(limpiar(np.clip(pred.numpy(), -1.0, 1.0)), dtype=tf.float32)
+    return sharpen(pred, nitidez) if nitidez > 0 else pred
 
 
 def restore_image(
-    generator: tf.keras.Model, image: Image.Image, size: int, *, quitar_puntos: bool = True
+    generator: tf.keras.Model,
+    image: Image.Image,
+    size: int,
+    *,
+    quitar_puntos: bool = True,
+    tta: bool = True,
+    nitidez: float = 0.0,
 ) -> Image.Image:
     """Restaura una imagen PIL de cualquier tamaño y formato.
 
     La salida tiene el tamaño de la entrada ya orientada (y acotada a `MAX_SIDE`).
-    `quitar_puntos=False` usa solo el generador (como en la tabla oficial de resultados).
+    `quitar_puntos=False, tta=False` usa solo el generador, una pasada.
     """
     prepared = prepare_input(image, size)
-    pred = predict(generator, prepared.tensor, quitar_puntos=quitar_puntos)
+    pred = predict(
+        generator, prepared.tensor, quitar_puntos=quitar_puntos, tta=tta, nitidez=nitidez
+    )
     square = tensor_to_image(pred).resize((prepared.side, prepared.side), Image.Resampling.BICUBIC)
     return square.crop(prepared.box)
 
@@ -195,12 +252,21 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--sin-limpieza", action="store_true", help="No quitar los puntos de polvo."
     )
+    parser.add_argument("--sin-tta", action="store_true", help="Una sola pasada, sin volteos.")
+    parser.add_argument(
+        "--nitidez", type=float, default=0.0, help="Máscara de enfoque (0 = no; 0.5 = media)."
+    )
     args = parser.parse_args(argv)
 
     generator, config = load_generator(args.checkpoint, args.config)
     with Image.open(args.input) as image:
         restored = restore_image(
-            generator, image, config.image_size, quitar_puntos=not args.sin_limpieza
+            generator,
+            image,
+            config.image_size,
+            quitar_puntos=not args.sin_limpieza,
+            tta=not args.sin_tta,
+            nitidez=args.nitidez,
         )
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
