@@ -41,7 +41,6 @@ from src.gan.metrics import all_metrics, to_unit_range
 INPUT_BASELINE = "Entrada (sin restaurar)"
 MEDIAN_BASELINE = "Filtro de mediana 3x3"
 MAIN_MODEL = "Pix2Pix (λ = 100)"
-CLEAN_MODEL = "Pix2Pix + limpieza de puntos"
 METRICS = ("psnr", "ssim", "l1")
 
 # Un "predictor" recibe un lote en [-1, 1] y devuelve otro lote en [-1, 1].
@@ -254,6 +253,8 @@ def run(
     grid_examples: int = 4,
     fid: bool = False,
     limpieza: bool = False,
+    main_name: str = MAIN_MODEL,
+    tta: bool = False,
 ) -> dict[str, Path]:
     """Evalúa y escribe CSVs y figuras. Devuelve las rutas escritas."""
     from src.gan.infer import load_generator
@@ -279,15 +280,24 @@ def run(
             generator, _ = load_generator(checkpoint)
         except FileNotFoundError:
             generator, _ = load_generator(checkpoint, config_path)
-        predictors[MAIN_MODEL] = generator_predictor(generator)
-        main_model = MAIN_MODEL
+        predictors[main_name] = generator_predictor(generator)
+        main_model = main_name
+        if tta:
+            from src.gan.infer import generate
+
+            def flipped(batch: np.ndarray, g: tf.keras.Model = generator) -> np.ndarray:
+                return generate(g, tf.convert_to_tensor(batch), tta=True).numpy()
+
+            predictors[f"{main_name} + TTA"] = flipped
         if limpieza:
             from src.gan.infer import predict
 
             def cleaned(batch: np.ndarray, g: tf.keras.Model = generator) -> np.ndarray:
-                return predict(g, tf.convert_to_tensor(batch), quitar_puntos=True).numpy()
+                return predict(
+                    g, tf.convert_to_tensor(batch), quitar_puntos=True, tta=False
+                ).numpy()
 
-            predictors[CLEAN_MODEL] = cleaned
+            predictors[f"{main_name} + limpieza de puntos"] = cleaned
     elif extra_models:
         main_model = extra_models[-1][0]
 
@@ -359,6 +369,10 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--no-baselines", action="store_true", help="Omite Entrada y Mediana.")
     parser.add_argument("--fid", action="store_true", help="Calcula FID (descarga InceptionV3).")
     parser.add_argument(
+        "--tta", action="store_true", help="Agrega la fila con TTA de 4 volteos (src/gan/infer.py)."
+    )
+    parser.add_argument("--name", default=MAIN_MODEL, help="Nombre del modelo de --checkpoint.")
+    parser.add_argument(
         "--limpieza",
         action="store_true",
         help="Agrega la fila Pix2Pix + limpieza de puntos (src/gan/despeckle.py).",
@@ -376,6 +390,8 @@ def main(argv: list[str] | None = None) -> None:
         with_baselines=not args.no_baselines,
         fid=args.fid,
         limpieza=args.limpieza,
+        main_name=args.name,
+        tta=args.tta,
     )
 
 

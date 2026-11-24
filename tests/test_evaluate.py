@@ -111,3 +111,35 @@ def test_cli_end_to_end(trained_checkpoint: Path, tmp_path: Path) -> None:
         assert len(list(csv.DictReader(handle))) == 9  # una fila por imagen y modelo
     assert (out / "results_grid.png").stat().st_size > 0
     assert (out / "failures.png").stat().st_size > 0
+
+
+def test_main_model_name_is_not_shadowed_by_extra_models(
+    trained_checkpoint: Path, tmp_path: Path
+) -> None:
+    data = tmp_path / "data"
+    write_pairs(data, size=64, n_pairs=2, seed=3)
+    raw = yaml.safe_load(Path("configs/smoke.yaml").read_text(encoding="utf-8"))
+    raw["data"].update({"train_dir": str(data / "train"), "test_dir": str(data / "val")})
+    raw["data"]["val_dir"] = str(data / "val")
+    config_path = tmp_path / "eval.yaml"
+    config_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    out = tmp_path / "eval"
+    main(
+        [
+            "--config",
+            str(config_path),
+            "--checkpoint",
+            str(trained_checkpoint),
+            "--model",
+            f"Otro={trained_checkpoint}",
+            "--name",
+            "Principal",
+            "--manifest",
+            "",
+            "--no-baselines",
+            "--out",
+            str(out),
+        ]
+    )
+    with (out / "summary.csv").open(encoding="utf-8") as handle:
+        assert [row["model"] for row in csv.DictReader(handle)] == ["Otro", "Principal"]

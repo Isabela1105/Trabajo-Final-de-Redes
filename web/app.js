@@ -53,11 +53,20 @@ function showMetrics(header) {
   mBefore.textContent = fmt(m.entrada);
   mAfter.textContent = fmt(m.restaurada);
   const d = m.restaurada.psnr - m.entrada.psnr;
-  const signo = d >= 0 ? "+" : "−";
-  delta.textContent =
-    d >= 0
-      ? `La restaurada se parece más a la original: ${signo}${Math.abs(d).toFixed(2)} dB de PSNR.`
-      : `En esta foto el modelo no mejora el PSNR (${signo}${Math.abs(d).toFixed(2)} dB): la entrada estaba poco dañada o el daño es desenfoque.`;
+  const ds = m.restaurada.ssim - m.entrada.ssim;
+  const db = `${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(2)} dB`;
+  const ss = `${ds >= 0 ? "+" : "−"}${Math.abs(ds).toFixed(3)}`;
+  if (d >= 0) {
+    delta.textContent = `La restaurada se parece más a la original: ${db} de PSNR, ${ss} de SSIM.`;
+  } else if (ds > 0) {
+    delta.textContent =
+      `El PSNR baja (${db}) pero la estructura mejora (SSIM ${ss}): la entrada estaba poco ` +
+      "dañada y el modelo cambia el color y el brillo más de lo necesario.";
+  } else {
+    delta.textContent =
+      `En esta foto el modelo no mejora (${db} de PSNR, SSIM ${ss}): la entrada estaba poco ` +
+      "dañada o el daño es desenfoque.";
+  }
   delta.classList.toggle("peor", d < 0);
   delta.hidden = false;
 }
@@ -154,6 +163,7 @@ async function restore() {
   body.append("file", currentFile);
   if (currentExample) body.append("example", currentExample);
   body.append("limpiar", $("limpiar").checked ? "true" : "false");
+  body.append("nitidez", $("nitidez").checked ? "true" : "false");
   try {
     const res = await fetch("/api/restore", { method: "POST", body });
     if (!res.ok) {

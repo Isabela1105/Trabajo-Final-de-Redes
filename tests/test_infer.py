@@ -157,3 +157,40 @@ def test_best_generator_is_saved_and_loadable(trained_checkpoint: Path) -> None:
     generator, config = load_generator(best)
     image = Image.fromarray(np.full((40, 30, 3), 90, np.uint8))
     assert restore_image(generator, image, config.image_size).size == (30, 40)
+
+
+def test_tta_undoes_each_flip() -> None:
+    from src.gan.infer import generate
+
+    class Shift(tf.keras.Model):
+        """Generador falso que depende de la posición: sin deshacer el volteo, falla."""
+
+        def call(self, x, training=False):
+            ramp = tf.reshape(tf.linspace(-0.2, 0.2, x.shape[2]), (1, 1, -1, 1))
+            return x + ramp
+
+    x = tf.random.uniform((2, 8, 8, 3), -0.5, 0.5, seed=1)
+    out = generate(Shift(), x, tta=True).numpy()
+    # el promedio de rampa y rampa invertida es 0: queda la entrada
+    np.testing.assert_allclose(out, x.numpy(), atol=1e-5)
+    np.testing.assert_allclose(generate(Shift(), x).numpy(), Shift()(x).numpy(), atol=1e-6)
+
+
+def test_sharpen_is_noop_at_zero_and_boosts_edges() -> None:
+    from src.gan.infer import sharpen
+
+    x = np.zeros((1, 16, 16, 3), np.float32)
+    x[:, :, 8:] = 0.5
+    np.testing.assert_array_equal(sharpen(x, 0.0).numpy(), x)
+    y = sharpen(x, 1.0).numpy()
+    assert y[0, 5, 8, 0] > 0.5 and y[0, 5, 7, 0] < 0.0  # sobrepaso a ambos lados del borde
+    assert y.min() >= -1.0 and y.max() <= 1.0
+
+
+def test_restore_image_with_all_options(trained_checkpoint: Path) -> None:
+    generator, config = load_generator(trained_checkpoint)
+    image = Image.fromarray(np.full((48, 32, 3), 100, np.uint8))
+    out = restore_image(
+        generator, image, config.image_size, quitar_puntos=True, tta=True, nitidez=0.5
+    )
+    assert out.size == (32, 48)

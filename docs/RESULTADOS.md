@@ -7,8 +7,8 @@ sus artefactos están en su Drive (`pix2pix_outputs/metricas_loss_existente/`).
 Regla: cada cifra de este documento sale de un archivo. Si un número no tiene archivo
 detrás, no se publica.
 
-> **Modelo vigente (nueva sustentación):** Pix2Pix entrenado hasta 100 épocas y elegido por
-> validación (época 62). Ver la [sección 6](#6-nueva-sustentación-100-épocas-y-selección-por-validación).
+> **Modelo vigente (nueva sustentación):** Pix2Pix con objetivo de 100 épocas, elegido por
+> validación (época 48), con TTA de 4 volteos: **21.30 dB, SSIM 0.7165, L1 0.0681** en test. Ver la [sección 6](#6-nueva-sustentación-100-épocas-y-selección-por-validación).
 > Las secciones 1 a 5 documentan la entrega `v1.0.0` (20 épocas) y no se reescriben.
 
 ## 1. Corrida base en Colab (evidencia disponible)
@@ -220,90 +220,113 @@ El modelo entregado deja la imagen suave. El experimento de `docs/EXPERIMENTO_NI
 (100 épocas, pérdida perceptual VGG16, λ_L1 = 50, label smoothing 0.1) ataca esa limitación
 sin modificar los resultados de esta página.
 
-## 6. Nueva sustentación: 100 épocas y selección por validación
+## 6. Nueva sustentación: 100 épocas, selección por validación y TTA
 
 ### 6.1 Qué se cambió y por qué
 
-La entrega `v1.0.0` entrenó 20 épocas (≈ 3 660 iteraciones con lote 2). El config de diseño
-(`configs/base.yaml`) prevé 100. Se entrenó Pix2Pix en Colab (GPU T4, ≈ 40 s por época) con
-**los mismos datos, arquitectura e hiperparámetros**: 456 pares de 256×256 (366 / 45 / 45 a
-partir de 152 fotos fuente, 3 variantes por foto), λ = 100, Adam 2e-4 constante, sin early
-stopping. Solo cambian el número de épocas y cómo se elige el modelo final.
+La entrega `v1.0.0` entrenó solo 20 épocas (≈ 3 660 iteraciones con lote 2), aunque el config de
+diseño prevé 100. Para la nueva sustentación se mantuvieron **los mismos datos, arquitectura e
+hiperparámetros**: 456 pares de 256×256 (366 / 45 / 45, a partir de 152 fotos fuente con 3
+variantes cada una), λ = 100, Adam 2e-4 constante. Cambiaron tres cosas:
 
-| Corrida | Épocas | Modelo evaluado | PSNR test | SSIM test | L1 test |
+1. **Más épocas** (objetivo 100, sin early stopping).
+2. **Selección del modelo por validación.** `train.py` guarda en `best/` el generador de la época
+   con menor L1 de validación (PR #53). El test solo se usa para reportar.
+3. **TTA (test-time augmentation):** se restaura la foto y sus 3 versiones volteadas, y se
+   promedian (`src/gan/infer.py::generate`). Se eligió por validación (+0.05 dB, +0.014 SSIM).
+
+### 6.2 Corridas
+
+| Corrida | Hardware | Épocas | Resultado |
+|---|---|---|---|
+| Colab #1 | GPU T4 | 100 completas | La **última** época da 20.41 dB / 0.654 en test: peor que la de 20 épocas. |
+| Colab #2 | GPU T4 | 70 de 100 | Mejor validación en la época 62 (20.77 dB / 0.701 en test). Se detuvo y su `best/` se perdió porque se llenó el Drive (≈ 700 MB por checkpoint). |
+| **Vigente** | CPU | 0–61, retomada desde la de 20 épocas | **Mejor validación en la época 48** (21.13 dB, L1 0.1369 en val). Las 13 épocas siguientes no la superaron; se detuvo en la 61 por tiempo. |
+
+Conclusión de las tres: **en una GAN la última época no es el mejor modelo.** La L1 de
+validación oscila de una época a otra (entre 0.137 y 0.155 desde la época 20 en la corrida vigente) porque G y D se persiguen.
+Elegir por validación es lo que convierte las épocas extra en mejora real. Curvas de la corrida
+vigente (`docs/resultados/pix2pix_100ep_metrics.csv`):
+
+![Curvas 100 épocas](img/curvas_100ep.png)
+
+### 6.3 Tabla final (test, 45 imágenes)
+
+| Modelo | PSNR (dB) ↑ | SSIM ↑ | L1 ↓ |
+|---|---|---|---|
+| Entrada sin restaurar | 20.30 ± 2.68 | 0.6558 ± 0.1789 | 0.0749 ± 0.0279 |
+| Filtro de mediana 3×3 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
+| Pix2Pix 20 épocas (`v1.0.0`) | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
+| U-Net solo L1 (20 épocas) | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| Pix2Pix 100 épocas (mejor val., ép. 48) | 21.14 ± 2.08 | 0.7003 ± 0.1064 | 0.0690 ± 0.0220 |
+| **Pix2Pix 100 épocas (ép. 48) + TTA** | **21.30 ± 2.15** | **0.7165 ± 0.1077** | **0.0681 ± 0.0236** |
+
+Fuente: `docs/resultados/test_100ep/summary.csv` (salida de `src.gan.evaluate`).
+
+La demo aplica además la limpieza de polvo (§2.5). Con el modelo vigente + TTA, la limpieza da
++0.04 dB y +0.004 de SSIM en validación, y en test 21.23 dB / 0.7175 (−0.07 dB, +0.001 SSIM): un
+efecto pequeño en las métricas, pero quita las motas visibles. La tabla reporta el modelo sin ella.
+
+**Comparación pareada** (misma imagen, diferencia por foto; t = media / error estándar):
+
+| Modelo vigente frente a… | ΔPSNR | t | Gana en PSNR | ΔSSIM | Gana en SSIM |
 |---|---|---|---|---|---|
-| Entrada sin restaurar | — | — | 20.30 | 0.6558 | 0.0749 |
-| `v1.0.0` | 20 | última época | 20.67 | 0.6835 | 0.0732 |
-| Colab #1 | 100 | última época (99) | 20.41 | 0.6540 | 0.0759 |
-| **Colab #2** | 71 de 100 | **mejor L1 de validación (época 62)** | **20.77** | **0.7006** | **0.0727** |
+| Entrada sin restaurar | +1.00 dB | 2.30 | 31 de 45 | +0.061 | 34 de 45 |
+| Pix2Pix 20 épocas (`v1.0.0`) | +0.63 dB | 4.75 | 37 de 45 | +0.033 | **45 de 45** |
+| U-Net solo L1 (20 épocas) | +0.43 dB | 3.90 | 32 de 45 | +0.015 | 43 de 45 |
 
-Fuentes: salida de `src.gan.evaluate` en Colab, en `docs/resultados/test_100ep/colab_salida.txt`
-(corrida #2) y en el mensaje del equipo del 24 nov (corrida #1). Tabla consolidada:
-`docs/resultados/test_100ep/summary.csv`.
+- La ganancia sobre la entrada pasa de **+0.37 dB a +1.00 dB** y de +0.028 a +0.061 de SSIM.
+- Frente a la entrega anterior, la mejora es consistente: mejor SSIM en las 45 fotos.
+- Pix2Pix supera ahora a la U-Net solo L1 en las tres métricas; con 20 épocas pasaba lo contrario.
+  Aun así, la ablación tiene 20 épocas: una ablación de 100 épocas queda como trabajo pendiente.
 
-### 6.2 Lectura
+### 6.4 Análisis de errores del modelo vigente
 
-- **La última época no es el mejor modelo.** En la corrida #1, desde la época 20, la L1 de validación
-  oscila entre 0.140 y 0.161 de una época a otra (el PSNR de validación entre 19.7 y 21.0 dB), y la época 99
-  cayó en un punto bajo: en test quedó por **debajo** del modelo de 20 épocas. En una GAN, D y G
-  se persiguen y la calidad no sube de forma monótona.
-- **Por eso `train.py` guarda ahora `best/`** (PR #53): solo el generador de la época con menor
-  L1 de validación, con `best.json`. El test nunca se usa para elegir; solo para reportar.
-- **Con esa selección, Pix2Pix mejora a la entrega en las tres métricas**: +0.10 dB de PSNR,
-  +0.017 de SSIM, −0.0005 de L1, y mejora la entrada en 29 de 45 fotos (antes 28). El SSIM
-  (0.7006) queda prácticamente igual al de la U-Net solo L1 (0.7011), que antes le sacaba 0.018.
-- **Ganancia frente a la entrada:** +0.47 dB y +0.045 de SSIM (antes +0.37 dB y +0.028).
-- **En la corrida #2 la validación no mejoró después de la época 62** (épocas 63–70, L1 entre
-  0.1368 y 0.1414). La corrida se detuvo en la época 70 porque se llenó el Drive (cada checkpoint
-  completo con optimizadores pesa ≈ 700 MB). La corrida #1 sí completó las 100 épocas y muestra
-  que seguir no aporta: su última época es la peor de las tres.
-- **Cuidado con la precisión:** con 45 imágenes y desviación ≈ 2.1 dB, diferencias de 0.1 dB en
-  la media están dentro del ruido. La mejora más sólida es el SSIM (+0.017) y que mejora el
-  rango de daño medio (siguiente tabla).
+`docs/resultados/test_100ep/analisis_errores.md`. Correlación entre el PSNR de la entrada y la
+ganancia: **−0.71**.
 
-### 6.3 Análisis de errores del modelo vigente
-
-Salida de `python scripts/error_analysis.py --per-image eval/per_image.csv` en Colab.
-Correlación entre el PSNR de la entrada y la ganancia: **−0.71**.
-
-| PSNR de la entrada | n | Ganancia PSNR, 20 ép. | Ganancia PSNR, ép. 62 | Ganancia SSIM, ép. 62 | Mejora en (ép. 62) |
-|---|---|---|---|---|---|
-| < 18 dB (muy dañada) | 6 | +2.67 | +2.63 | +0.043 | 6 de 6 |
-| 18–20 dB | 17 | +1.47 | **+2.03** | +0.104 | 15 de 17 |
-| 20–22 dB | 11 | +0.29 | **+0.61** | +0.012 | 7 de 11 |
-| ≥ 22 dB (poco dañada) | 11 | −2.48 | −3.26 | −0.012 | 1 de 11 |
-
-| Degradación | n | Ganancia PSNR, 20 ép. | Ganancia PSNR, ép. 62 | Mejora en (ép. 62) |
+| PSNR de la entrada | n | Ganancia `v1.0.0` | Ganancia vigente | Mejora en (vigente) |
 |---|---|---|---|---|
-| Rayones | 6 | +1.80 | +2.37 | 6 de 6 |
-| Desvanecido | 25 | +1.39 | +1.44 | 21 de 25 |
-| Contraste | 19 | +0.96 | +1.36 | 14 de 19 |
-| Ruido | 20 | +0.50 | +1.00 | 13 de 20 |
-| Baja resolución | 15 | +0.84 | +0.56 | 10 de 15 |
-| Desenfoque | 25 | +0.43 | +0.50 | 17 de 25 |
-| Polvo | 19 | +0.13 | +0.49 | 12 de 19 |
-| JPEG | 26 | +0.43 | +0.24 | 16 de 26 |
+| < 18 dB (muy dañada) | 6 | +2.67 | **+3.61** | 6 de 6 |
+| 18–20 dB | 17 | +1.47 | **+2.25** | 15 de 17 |
+| 20–22 dB | 11 | +0.29 | **+1.15** | 9 de 11 |
+| ≥ 22 dB (poco dañada) | 11 | −2.48 | −2.49 | 1 de 11 |
 
-Conclusiones para la sustentación:
+| Degradación | n | Ganancia `v1.0.0` | Ganancia vigente | Mejora en (vigente) |
+|---|---|---|---|---|
+| Rayones | 6 | +1.80 | +2.83 | 6 de 6 |
+| Contraste | 19 | +0.96 | +1.97 | 15 de 19 |
+| Desvanecido | 25 | +1.39 | +1.95 | 21 de 25 |
+| Desenfoque | 25 | +0.43 | +1.23 | 19 de 25 |
+| Ruido | 20 | +0.50 | +1.20 | 14 de 20 |
+| Baja resolución | 15 | +0.84 | +1.18 | 11 de 15 |
+| JPEG | 26 | +0.43 | +0.86 | 18 de 26 |
+| Polvo | 19 | +0.13 | +0.76 | 13 de 19 |
 
-1. **El modelo restaura bien lo global** (color, contraste, rayones, ruido) y **poco lo fino**
-   (desenfoque, baja resolución, JPEG): una U-Net a 256×256 con pérdida L1 promedia los detalles
-   que no puede inferir.
-2. **Sobre-corrige fotos poco dañadas:** si la entrada ya tiene ≥ 22 dB, el modelo cambia color
-   y textura de más y empeora 10 de 11. El entrenamiento solo vio fotos dañadas (cada par tiene al
-   menos una degradación), así que nunca aprendió a «no hacer nada». Mejora posible: incluir pares
-   limpios→limpios en el entrenamiento.
-3. **El discriminador gana muy pronto** (pérdida de D ≈ 0 en la mayoría de épocas): su señal es
-   débil y por eso Pix2Pix queda cerca de la U-Net solo L1 en métricas píxel a píxel.
+Lectura para la sustentación:
 
-### 6.4 Reproducir
+1. **Mejora en todos los tipos de daño**, y más en los globales (rayones, contraste, color) que en
+   los finos (JPEG, polvo, baja resolución): una U-Net a 256×256 con pérdida L1 promedia el
+   detalle que no puede inferir.
+2. **El modo de falla persiste: sobre-corrige fotos poco dañadas.** Con entradas de ≥ 22 dB
+   empeora 10 de 11 (−2.5 dB), aunque el SSIM ya no baja (+0.007). El entrenamiento solo vio
+   pares dañados, así que nunca aprendió a «no hacer nada». Mejora propuesta: incluir pares
+   limpio→limpio (identidad) en el entrenamiento.
+3. **El discriminador gana muy pronto** (pérdida de D cerca de 0 en muchas épocas, ver curvas):
+   su señal es débil. Por eso las métricas de Pix2Pix y de la U-Net solo L1 son cercanas.
+4. **La salida sigue siendo suave.** La máscara de enfoque (casilla *Realzar nitidez* de la demo,
+   `--nitidez` en `src.gan.infer`) hace la foto más definida a la vista, pero en validación y
+   prueba **baja** el PSNR y el SSIM con cualquier intensidad probada (con 0.3: −0.13 dB en validación y −0.06 dB en prueba), porque
+   también realza el ruido. Por eso no está en la tabla y viene apagada.
 
-```python
-# Colab con GPU, repo en main, datasetv1.zip extraído en /content/dataset
-!python -m src.gan.train --config cfg100.yaml --resume          # epochs: 100, sin early stopping
-!python -m src.gan.evaluate --config cfg100.yaml --checkpoint <salida>/best --limpieza --out <salida>/eval
-!python scripts/error_analysis.py --per-image <salida>/eval/per_image.csv
-```
+![Resultados en test, modelo vigente](img/results_grid_100ep.png)
 
-Usar `max_to_keep: 1` si el Drive tiene menos de ≈ 3 GB libres.
+![Peores casos, modelo vigente](img/failures_100ep.png)
 
+### 6.5 Pesos y reproducción
+
+- Pesos del modelo vigente (solo generador, ≈ 210 MB): `pix2pix_100ep_mejor.zip` del release.
+  Se descomprime en la raíz y queda `outputs/pix2pix_100ep_mejor/best/`.
+- Evaluar: comando de `docs/resultados/test_100ep/README.md`.
+- Entrenar en Colab: `max_to_keep: 1` y al menos 3 GB libres en Drive; el mejor modelo queda en
+  `<salida>/best/`.
