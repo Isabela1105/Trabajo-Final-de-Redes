@@ -250,6 +250,12 @@ vigente (`docs/resultados/pix2pix_100ep_metrics.csv`):
 
 ![Curvas 100 épocas](img/curvas_100ep.png)
 
+**Reproducibilidad.** Con la misma semilla (42), la corrida de 100 épocas en Colab repitió los
+valores de validación de la corrida de 20 épocas de Isabela
+(`notebooks/pix2pix_entrenamiento_colab.ipynb`) en las épocas 0–16; por ejemplo, L1 de
+validación 0.1973 en la época 0 y 0.1443 en la 16 en ambas. Desde la 17 se separan levemente por
+el no-determinismo de las operaciones en GPU.
+
 ### 6.3 Tabla final (test, 45 imágenes)
 
 | Modelo | PSNR (dB) ↑ | SSIM ↑ | L1 ↓ |
@@ -258,8 +264,9 @@ vigente (`docs/resultados/pix2pix_100ep_metrics.csv`):
 | Filtro de mediana 3×3 | 20.05 ± 2.26 | 0.6655 ± 0.1076 | 0.0755 ± 0.0264 |
 | Pix2Pix 20 épocas (`v1.0.0`) | 20.67 ± 2.15 | 0.6835 ± 0.1094 | 0.0732 ± 0.0263 |
 | U-Net solo L1 (20 épocas) | 20.87 ± 1.98 | 0.7011 ± 0.1102 | 0.0704 ± 0.0215 |
+| U-Net solo L1 (mejor val., ép. 45) + TTA | 21.21 ± 2.22 | **0.7222 ± 0.1100** | 0.0694 ± 0.0249 |
 | Pix2Pix 100 épocas (mejor val., ép. 48) | 21.14 ± 2.08 | 0.7003 ± 0.1064 | 0.0690 ± 0.0220 |
-| **Pix2Pix 100 épocas (ép. 48) + TTA** | **21.30 ± 2.15** | **0.7165 ± 0.1077** | **0.0681 ± 0.0236** |
+| **Pix2Pix 100 épocas (ép. 48) + TTA** | **21.30 ± 2.15** | 0.7165 ± 0.1077 | **0.0681 ± 0.0236** |
 
 Fuente: `docs/resultados/test_100ep/summary.csv` (salida de `src.gan.evaluate`).
 
@@ -274,11 +281,13 @@ efecto pequeño en las métricas, pero quita las motas visibles. La tabla report
 | Entrada sin restaurar | +1.00 dB | 2.30 | 31 de 45 | +0.061 | 34 de 45 |
 | Pix2Pix 20 épocas (`v1.0.0`) | +0.63 dB | 4.75 | 37 de 45 | +0.033 | **45 de 45** |
 | U-Net solo L1 (20 épocas) | +0.43 dB | 3.90 | 32 de 45 | +0.015 | 43 de 45 |
+| **U-Net solo L1, mismo protocolo (ép. 45 + TTA)** | +0.09 dB | 1.34 | 21 de 45 | **−0.006** (t = −6.1) | 9 de 45 |
 
 - La ganancia sobre la entrada pasa de **+0.37 dB a +1.00 dB** y de +0.028 a +0.061 de SSIM.
 - Frente a la entrega anterior, la mejora es consistente: mejor SSIM en las 45 fotos.
-- Pix2Pix supera ahora a la U-Net solo L1 en las tres métricas; con 20 épocas pasaba lo contrario.
-  Aun así, la ablación tiene 20 épocas: una ablación de 100 épocas queda como trabajo pendiente.
+- **Ablación justa (§7.4):** con el mismo protocolo (continuada desde 20 épocas, elegida por
+  validación en la época 45 y con TTA), la U-Net solo L1 **empata** en PSNR y L1 y **gana en SSIM**.
+  Frente a la U-Net de 20 épocas, Pix2Pix sí gana en todo, pero esa comparación no es justa.
 
 ### 6.4 Análisis de errores del modelo vigente
 
@@ -325,8 +334,77 @@ Lectura para la sustentación:
 
 ### 6.5 Pesos y reproducción
 
-- Pesos del modelo vigente (solo generador, ≈ 210 MB): `pix2pix_100ep_mejor.zip` del release.
+- Pesos del modelo vigente (solo generador, ≈ 210 MB): [`pix2pix_100ep_mejor.zip`](https://github.com/Isabela1105/Trabajo-Final-de-Redes/releases/download/v1.1.0/pix2pix_100ep_mejor.zip) del release `v1.1.0`.
   Se descomprime en la raíz y queda `outputs/pix2pix_100ep_mejor/best/`.
 - Evaluar: comando de `docs/resultados/test_100ep/README.md`.
 - Entrenar en Colab: `max_to_keep: 1` y al menos 3 GB libres en Drive; el mejor modelo queda en
   `<salida>/best/`.
+
+## 7. Experimentos posteriores (24 nov): qué se probó y por qué no cambió el modelo
+
+Regla: el modelo o la demo solo cambian si la mejora es **evidente en validación** y se confirma
+en prueba. El test no se usa para decidir.
+
+### 7.1 Pares sin daño (identidad): resultado negativo
+
+**Hipótesis.** El modelo sobre-corrige las fotos poco dañadas porque nunca vio una foto limpia.
+**Prueba.** Se agregaron 55 pares limpio → limpio (15 % de los pares; 1 por foto fuente, elegidas
+al azar con semilla 42) al entrenamiento y se continuó desde la época 48 del modelo vigente.
+
+| Épocas 49–57 | L1 val | PSNR val |
+|---|---|---|
+| Mejor época (49) | 0.1384 | 21.01 |
+| Peor época (57) | 0.1447 | 20.75 |
+| Modelo vigente (48) | **0.1369** | **21.13** |
+
+Ninguna época superó al modelo vigente en validación. En la época 57, con TTA, quedó peor en todo:
+validación 20.80 dB (vigente 21.20), prueba 20.87 dB (vigente 21.30) y **también en las fotos poco
+dañadas**, que era el objetivo (prueba ≥ 22 dB: 21.10 frente a 21.71). Se detuvo en la 57.
+Lectura: con λ = 100 y un discriminador que domina, 15 % de pares identidad no basta para
+enseñar «no tocar»; probablemente necesita entrenarse desde el inicio o una pérdida específica.
+
+### 7.2 Mezcla salida/entrada: no adoptada
+
+`mezcla·salida + (1 − mezcla)·entrada` (`--mezcla` en `src.gan.evaluate` / `predict`).
+
+| Mezcla | PSNR val | SSIM val | L1 val | Mejora sobre 1.0 (val) | PSNR test | SSIM test |
+|---|---|---|---|---|---|---|
+| 1.0 (vigente) | 21.20 | **0.6593** | 0.0680 | — | 21.30 | 0.7165 |
+| 0.9 | 21.28 | 0.6586 | 0.0672 | 25 de 45 | 21.48 | 0.7191 |
+| 0.8 | **21.29** | 0.6550 | **0.0670** | 21 de 45 | 21.60 | 0.7183 |
+
+En validación la ganancia es pequeña (+0.08 a +0.10 dB), baja el SSIM y mejora en la mitad de las
+fotos o menos: **no es evidente**, así que no se adopta aunque en prueba saldría mejor. Queda como
+opción apagada.
+
+### 7.3 Corrección sobre `label_smoothing`
+
+`src/gan/losses.py` no acepta `label_smoothing`, pero no es un error silencioso: `train.py` avisa
+cuando se pide y `src/gan/losses_nitidez.py` sí lo implementa. No se modificó el módulo original.
+
+### 7.4 Ablación con el mismo protocolo: la GAN no mejora las métricas píxel a píxel
+
+Para que la comparación sea justa, la U-Net solo L1 (sin discriminador, λ = 1000) se continuó
+desde sus 20 épocas hasta la 61 con selección por L1 de validación (igual que Pix2Pix). Su mejor
+época fue la **45** (L1 val 0.1378, PSNR val 21.04; Pix2Pix: 0.1369 y 21.13). Curvas:
+`docs/resultados/ablacion_100ep_metrics.csv`. Test con TTA (`summary_ablacion.csv`,
+`per_image_ablacion.csv`):
+
+| Test, 45 fotos, ambos con TTA | PSNR | SSIM | L1 | Ganancia sobre la entrada |
+|---|---|---|---|---|
+| U-Net solo L1 (ép. 45) | 21.21 | **0.7222** | 0.0694 | +0.91 dB |
+| Pix2Pix (ép. 48) | **21.30** | 0.7165 | **0.0681** | +1.00 dB |
+| Diferencia pareada (Pix2Pix − U-Net) | +0.09 (t = 1.34) | −0.006 (t = −6.09) | −0.0013 (t = −1.75) | |
+
+- **PSNR y L1: empate estadístico** (|t| < 2; Pix2Pix es mejor en 21 de 45 fotos).
+- **SSIM: gana la U-Net** en 36 de 45 fotos. Con el mismo entrenamiento, la pérdida adversarial no
+  mejora las métricas de fidelidad: es lo que reporta el artículo de Pix2Pix (Isola et al., 2017),
+  donde la GAN busca realismo perceptual y nitidez, no menor error por píxel.
+- Las dos sobre-corrigen las fotos poco dañadas (≥ 22 dB: −2.5 y −2.6 dB): el problema es de los
+  datos de entrenamiento, no de la GAN.
+- **Decisión:** el modelo vigente se mantiene. En validación, el criterio de selección, Pix2Pix
+  queda marginalmente arriba (L1 0.1369 frente a 0.1378), y no hay una mejora evidente que
+  justifique cambiar.
+- Conclusión anterior corregida: con 20 épocas, Pix2Pix parecía ganarle a la U-Net solo porque la
+  U-Net tenía menos entrenamiento.
+

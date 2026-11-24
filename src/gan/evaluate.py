@@ -255,6 +255,7 @@ def run(
     limpieza: bool = False,
     main_name: str = MAIN_MODEL,
     tta: bool = False,
+    mezcla: float = 1.0,
 ) -> dict[str, Path]:
     """Evalúa y escribe CSVs y figuras. Devuelve las rutas escritas."""
     from src.gan.infer import load_generator
@@ -289,6 +290,14 @@ def run(
                 return generate(g, tf.convert_to_tensor(batch), tta=True).numpy()
 
             predictors[f"{main_name} + TTA"] = flipped
+        if mezcla < 1.0:
+            from src.gan.infer import predict
+
+            def blended(batch: np.ndarray, g: tf.keras.Model = generator) -> np.ndarray:
+                out = predict(g, tf.convert_to_tensor(batch), quitar_puntos=False, mezcla=mezcla)
+                return out.numpy()
+
+            predictors[f"{main_name} + TTA + mezcla {mezcla:.2f}"] = blended
         if limpieza:
             from src.gan.infer import predict
 
@@ -371,6 +380,12 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--tta", action="store_true", help="Agrega la fila con TTA de 4 volteos (src/gan/infer.py)."
     )
+    parser.add_argument(
+        "--mezcla",
+        type=float,
+        default=1.0,
+        help="Agrega la fila TTA + mezcla α·salida + (1−α)·entrada (α < 1).",
+    )
     parser.add_argument("--name", default=MAIN_MODEL, help="Nombre del modelo de --checkpoint.")
     parser.add_argument(
         "--limpieza",
@@ -392,6 +407,7 @@ def main(argv: list[str] | None = None) -> None:
         limpieza=args.limpieza,
         main_name=args.name,
         tta=args.tta,
+        mezcla=args.mezcla,
     )
 
 
