@@ -149,6 +149,33 @@ Los tres peores casos son las tres variantes de una misma fuente (`0898`, flores
 azul): el ruido fuerte sobre una zona lisa deja una textura granulada y artefactos en cuadrícula,
 y en `0898_v0` el desvanecido extremo no permite recuperar el azul del cielo.
 
+### 2.5 Limpieza de puntos de polvo (post-entrega)
+
+El generador copia parte de las motas negras y blancas de la entrada. `src/gan/despeckle.py`
+las detecta sin entrenar nada: píxeles grises mucho más oscuros o claros que la mediana 7×7,
+agrupados en manchas pequeñas (3–40 px), compactas y rodeadas de un tono distinto. Así no toca
+cables, líneas ni objetos oscuros grandes. Cada mancha se rellena con la mediana de sus vecinos.
+Se aplica **antes** del generador (para que no copie el polvo) y **después** (por si queda alguno).
+
+```bash
+python -m src.gan.evaluate --config configs/base.yaml \
+    --checkpoint outputs/base/checkpoints --limpieza --out outputs/eval_limpieza
+```
+
+| Modelo (test, n = 45) | PSNR (dB) ↑ | SSIM ↑ | L1 ↓ | PSNR fotos con polvo (19) | PSNR sin polvo (26) |
+|---|---|---|---|---|---|
+| Entrada (sin restaurar) | 20.30 | 0.6558 | 0.0749 | 20.39 | 20.23 |
+| Pix2Pix (λ = 100) | 20.67 | 0.6835 | 0.0732 | 20.52 | 20.78 |
+| **Pix2Pix + limpieza de puntos** | **20.75** | **0.6859** | **0.0729** | **20.82** | 20.70 |
+
+En las fotos con polvo gana +0.30 dB; en las que no tienen, pierde 0.08 dB por algún falso
+positivo en texturas finas. La tabla oficial de la sección 2 (la de la entrega v1.0.0) **no
+cambia**: se calcula sin limpieza. La demo la usa por defecto y se puede apagar con la casilla
+*Quitar puntos de polvo* (o `--sin-limpieza` en `src.gan.infer` y `scripts/restore_folder.py`).
+
+Limitación honesta: quita la mayoría de las motas, no siempre todas. Las de 1 px se confunden
+con ruido y no se tocan; los rayones (líneas) se dejan a propósito para no borrar cables reales.
+
 ## 3. Corrida de 45 épocas y ablación de Cristian Muñoz (validación)
 
 Cristian entrenó en Colab (GPU T4, último `main`, `datasetv1.zip`) la base Pix2Pix y la ablación

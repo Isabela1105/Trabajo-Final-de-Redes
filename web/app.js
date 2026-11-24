@@ -153,6 +153,7 @@ async function restore() {
   const body = new FormData();
   body.append("file", currentFile);
   if (currentExample) body.append("example", currentExample);
+  body.append("limpiar", $("limpiar").checked ? "true" : "false");
   try {
     const res = await fetch("/api/restore", { method: "POST", body });
     if (!res.ok) {

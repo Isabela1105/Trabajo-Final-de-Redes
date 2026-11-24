@@ -41,6 +41,7 @@ def restore_folder(
     out_dir: str | Path,
     *,
     columns: int = 2,
+    quitar_puntos: bool = True,
 ) -> Path:
     """Restaura cada imagen con cada modelo y guarda PNGs y `comparacion.png`."""
     files = sorted(p for p in Path(input_dir).iterdir() if p.suffix.lower() in SUFFIXES)
@@ -55,7 +56,9 @@ def restore_folder(
             original = to_rgb(image)
         row = [original]
         for name, (generator, config) in loaded.items():
-            restored = restore_image(generator, original, config.image_size)
+            restored = restore_image(
+                generator, original, config.image_size, quitar_puntos=quitar_puntos
+            )
             target = out / name.replace(" ", "_").replace("/", "-")
             target.mkdir(parents=True, exist_ok=True)
             restored.save(target / f"{path.stem}.png")
@@ -101,9 +104,18 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--input", required=True)
     parser.add_argument("--out", default="outputs/real_restauradas")
     parser.add_argument("--columns", type=int, default=2)
+    parser.add_argument("--sin-limpieza", action="store_true", help="No quitar el polvo.")
     args = parser.parse_args(argv)
     models = {"Pix2Pix": args.checkpoint, **dict(args.compare)}
-    print(restore_folder(models, args.input, args.out, columns=args.columns))
+    print(
+        restore_folder(
+            models,
+            args.input,
+            args.out,
+            columns=args.columns,
+            quitar_puntos=not args.sin_limpieza,
+        )
+    )
 
 
 if __name__ == "__main__":

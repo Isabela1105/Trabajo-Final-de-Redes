@@ -138,3 +138,11 @@ def test_restore_folder_script(trained_checkpoint: Path, tmp_path: Path) -> None
     assert [p.stem for p in restored] == ["real_000", "real_001", "real_002"]
     assert Image.open(restored[1]).size == (70, 30)
     assert len(list((tmp_path / "out" / "U-Net_solo_L1").glob("*.png"))) == 3
+
+
+def test_cleaning_can_be_disabled(trained_checkpoint: Path) -> None:
+    generator, config = load_generator(trained_checkpoint)
+    image = Image.fromarray(np.full((64, 64, 3), 128, np.uint8))
+    with_clean = restore_image(generator, image, config.image_size)
+    without = restore_image(generator, image, config.image_size, quitar_puntos=False)
+    assert with_clean.size == without.size == (64, 64)

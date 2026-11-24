@@ -149,13 +149,37 @@ def tensor_to_image(tensor: tf.Tensor) -> Image.Image:
     return Image.fromarray(array, mode="RGB")
 
 
-def restore_image(generator: tf.keras.Model, image: Image.Image, size: int) -> Image.Image:
+def predict(
+    generator: tf.keras.Model, tensor: tf.Tensor, *, quitar_puntos: bool = True
+) -> tf.Tensor:
+    """Generador sobre un lote en [-1, 1], con limpieza de polvo antes y después (opcional).
+
+    La limpieza (`src/gan/despeckle.py`) quita puntos aislados negros o blancos: antes del
+    generador, para que no los copie; después, por si alguno sobrevivió.
+    """
+    if not quitar_puntos:
+        return tf.cast(generator(tensor, training=False), tf.float32)
+    from src.gan.despeckle import remove_specks
+
+    def limpiar(batch: np.ndarray) -> np.ndarray:
+        unit = (np.asarray(batch, dtype=np.float32) + 1.0) / 2.0
+        return np.stack([remove_specks(img)[0] for img in unit]) * 2.0 - 1.0
+
+    cleaned = tf.convert_to_tensor(limpiar(tensor), dtype=tf.float32)
+    pred = tf.cast(generator(cleaned, training=False), tf.float32)
+    return tf.convert_to_tensor(limpiar(np.clip(pred.numpy(), -1.0, 1.0)), dtype=tf.float32)
+
+
+def restore_image(
+    generator: tf.keras.Model, image: Image.Image, size: int, *, quitar_puntos: bool = True
+) -> Image.Image:
     """Restaura una imagen PIL de cualquier tamaño y formato.
 
     La salida tiene el tamaño de la entrada ya orientada (y acotada a `MAX_SIDE`).
+    `quitar_puntos=False` usa solo el generador (como en la tabla oficial de resultados).
     """
     prepared = prepare_input(image, size)
-    pred = tf.cast(generator(prepared.tensor, training=False), tf.float32)
+    pred = predict(generator, prepared.tensor, quitar_puntos=quitar_puntos)
     square = tensor_to_image(pred).resize((prepared.side, prepared.side), Image.Resampling.BICUBIC)
     return square.crop(prepared.box)
 
@@ -168,11 +192,16 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--config", default=None, help="YAML de entrenamiento (opcional).")
     parser.add_argument("--input", required=True, help="Imagen a restaurar.")
     parser.add_argument("--output", required=True, help="Ruta del PNG restaurado.")
+    parser.add_argument(
+        "--sin-limpieza", action="store_true", help="No quitar los puntos de polvo."
+    )
     args = parser.parse_args(argv)
 
     generator, config = load_generator(args.checkpoint, args.config)
     with Image.open(args.input) as image:
-        restored = restore_image(generator, image, config.image_size)
+        restored = restore_image(
+            generator, image, config.image_size, quitar_puntos=not args.sin_limpieza
+        )
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     restored.save(output)

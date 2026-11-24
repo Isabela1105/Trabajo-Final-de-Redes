@@ -41,6 +41,7 @@ from src.gan.metrics import all_metrics, to_unit_range
 INPUT_BASELINE = "Entrada (sin restaurar)"
 MEDIAN_BASELINE = "Filtro de mediana 3x3"
 MAIN_MODEL = "Pix2Pix (λ = 100)"
+CLEAN_MODEL = "Pix2Pix + limpieza de puntos"
 METRICS = ("psnr", "ssim", "l1")
 
 # Un "predictor" recibe un lote en [-1, 1] y devuelve otro lote en [-1, 1].
@@ -252,6 +253,7 @@ def run(
     with_baselines: bool = True,
     grid_examples: int = 4,
     fid: bool = False,
+    limpieza: bool = False,
 ) -> dict[str, Path]:
     """Evalúa y escribe CSVs y figuras. Devuelve las rutas escritas."""
     from src.gan.infer import load_generator
@@ -279,6 +281,13 @@ def run(
             generator, _ = load_generator(checkpoint, config_path)
         predictors[MAIN_MODEL] = generator_predictor(generator)
         main_model = MAIN_MODEL
+        if limpieza:
+            from src.gan.infer import predict
+
+            def cleaned(batch: np.ndarray, g: tf.keras.Model = generator) -> np.ndarray:
+                return predict(g, tf.convert_to_tensor(batch), quitar_puntos=True).numpy()
+
+            predictors[CLEAN_MODEL] = cleaned
     elif extra_models:
         main_model = extra_models[-1][0]
 
@@ -349,6 +358,11 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--manifest", default=str(REPO_ROOT / "data" / "manifest.csv"))
     parser.add_argument("--no-baselines", action="store_true", help="Omite Entrada y Mediana.")
     parser.add_argument("--fid", action="store_true", help="Calcula FID (descarga InceptionV3).")
+    parser.add_argument(
+        "--limpieza",
+        action="store_true",
+        help="Agrega la fila Pix2Pix + limpieza de puntos (src/gan/despeckle.py).",
+    )
     args = parser.parse_args(argv)
 
     run(
@@ -361,6 +375,7 @@ def main(argv: list[str] | None = None) -> None:
         manifest=args.manifest,
         with_baselines=not args.no_baselines,
         fid=args.fid,
+        limpieza=args.limpieza,
     )
 
 
