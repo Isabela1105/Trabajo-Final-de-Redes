@@ -146,3 +146,14 @@ def test_cleaning_can_be_disabled(trained_checkpoint: Path) -> None:
     with_clean = restore_image(generator, image, config.image_size)
     without = restore_image(generator, image, config.image_size, quitar_puntos=False)
     assert with_clean.size == without.size == (64, 64)
+
+
+def test_best_generator_is_saved_and_loadable(trained_checkpoint: Path) -> None:
+    import json
+
+    best = trained_checkpoint.parent / "best"
+    info = json.loads((best / "best.json").read_text(encoding="utf-8"))
+    assert info["epoch"] == 0 and info["val_l1"] > 0
+    generator, config = load_generator(best)
+    image = Image.fromarray(np.full((40, 30, 3), 90, np.uint8))
+    assert restore_image(generator, image, config.image_size).size == (30, 40)
