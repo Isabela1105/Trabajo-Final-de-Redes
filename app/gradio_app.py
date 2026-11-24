@@ -23,14 +23,17 @@ def build_interface(checkpoint: str):
 
     generator, config = load_generator(checkpoint)
 
-    def run(image):
+    def run(image, limpiar):
         if image is None:
             return None
-        return restore_image(generator, image, config.image_size)
+        return restore_image(generator, image, config.image_size, quitar_puntos=limpiar)
 
     return gr.Interface(
         fn=run,
-        inputs=gr.Image(type="pil", label="Foto degradada"),
+        inputs=[
+            gr.Image(type="pil", label="Foto degradada"),
+            gr.Checkbox(value=True, label="Quitar puntos de polvo"),
+        ],
         outputs=gr.Image(type="pil", label="Restaurada"),
         title="Restauración de fotografías con Pix2Pix",
         description="U-Net + PatchGAN entrenados con el dataset propio del curso.",

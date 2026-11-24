@@ -179,6 +179,21 @@ a.secondary {
   display: block;
 }
 
+.option {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.option input {
+  accent-color: var(--accent);
+  width: 1rem;
+  height: 1rem;
+}
+
 .message {
   min-height: 1.5em;
   font-size: 0.9rem;

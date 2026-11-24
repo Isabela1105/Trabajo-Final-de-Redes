@@ -267,10 +267,13 @@ python -m src.gan.evaluate --config configs/base.yaml \
 python scripts/results_table.py --summary outputs/base/eval/summary.csv \
   --update README.md report/informe.md docs/RESULTADOS.md
 
-# Restaurar una imagen
+# Restaurar una imagen (quita también los puntos de polvo; --sin-limpieza para desactivarlo)
 python -m src.gan.infer --checkpoint outputs/base/checkpoints \
   --input ruta/a/foto.jpg --output ruta/a/restaurada.png
 ```
+
+La limpieza de polvo (`src/gan/despeckle.py`) sube el PSNR de las fotos con polvo de 20.52 a
+20.82 dB; la tabla oficial no la usa. Detalle en `docs/RESULTADOS.md` §2.5.
 
 Métricas: PSNR, SSIM y L1 en `[0, 1]` por imagen, media ± desviación estándar. FID opcional
 con `--fid`. Atajos: `make eval`, `make results`, `make demo`.
@@ -316,6 +319,7 @@ con `--fid`. Atajos: `make eval`, `make results`, `make demo`.
 ├── src/gan/
 │   ├── config.py · losses.py · train.py
 │   ├── metrics.py · evaluate.py · infer.py
+│   ├── despeckle.py              # limpieza de puntos de polvo
 │   ├── data/                     # dataset, degradaciones, estadísticas, tf.data
 │   ├── models/                   # blocks.py, generator.py, discriminator.py
 │   └── utils/viz.py

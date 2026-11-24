@@ -164,6 +164,7 @@ def create_app(
     async def restore(
         file: UploadFile = File(...),  # noqa: B008
         example: str | None = Form(None),  # noqa: B008
+        limpiar: bool = Form(True),  # noqa: B008
     ) -> Response:
         """Devuelve el PNG restaurado.
 
@@ -184,7 +185,7 @@ def create_app(
             raise HTTPException(status_code=415, detail="No es una imagen válida.") from error
 
         generator = holder.get()
-        restored = restore_image(generator, image, holder.image_size)
+        restored = restore_image(generator, image, holder.image_size, quitar_puntos=limpiar)
         buffer = io.BytesIO()
         restored.save(buffer, format="PNG")
         headers = {}

@@ -47,7 +47,7 @@ uvicorn app.server:app --port 8000
 | `GET` | `/api/examples` | Lista de ejemplos del selector. |
 | `GET` | `/api/examples/{nombre}` | Imagen de ejemplo (solo archivos del índice). |
 | `GET` | `/api/examples/{nombre}/original` | Original sin daño del ejemplo (si existe `target/`). |
-| `POST` | `/api/restore` | `multipart/form-data` con `file` (y opcional `example`); responde `image/png`. Con `example`, la cabecera `X-Metricas` trae PSNR/SSIM de entrada y restaurada frente a la original. |
+| `POST` | `/api/restore` | `multipart/form-data` con `file` (y opcionales `example` y `limpiar`, `true` por defecto); responde `image/png`. Con `example`, la cabecera `X-Metricas` trae PSNR/SSIM de entrada y restaurada frente a la original. |
 
 Errores: `400` archivo vacío, `413` más de 20 MB, `415` no es imagen, `503` sin modelo.
 
@@ -62,8 +62,10 @@ curl -F "file=@foto.jpg" http://127.0.0.1:8000/api/restore -o restaurada.png
 1. Se corrige la orientación EXIF y la transparencia se compone sobre blanco.
 2. Si mide más de 4096 px de lado, se reduce antes de procesar (protege la memoria).
 3. Se rellena por reflexión hasta quedar cuadrada, se lleva a 256×256 y se normaliza a `[-1, 1]`.
-4. El generador predice; la salida se desnormaliza, se recorta el relleno y vuelve al tamaño
-   de entrada (acotado).
+4. Si la casilla *Quitar puntos de polvo* está marcada (por defecto), se borran las motas
+   negras y blancas aisladas (`src/gan/despeckle.py`).
+5. El generador predice y se vuelve a limpiar por si quedó alguna mota.
+6. La salida se desnormaliza, se recorta el relleno y vuelve al tamaño de entrada (acotado).
 
 Así una foto vertical de celular no sale estirada ni rotada.
 
@@ -95,3 +97,5 @@ restaurada frente a la original. Así se ve cuánto mejora el modelo en cada fot
 - Puede **inventar** detalles (caras, texto) que no existían; no sirve como prueba documental.
 - Solo conoce las degradaciones del dataset (`docs/DATASET.md`); daños muy distintos (manchas
   de agua, partes faltantes grandes) no se corrigen bien.
+- La limpieza quita la mayoría de los puntos de polvo, no siempre todos: las motas de 1 px y
+  los rayones (líneas) se dejan para no borrar detalles reales. Ver `docs/RESULTADOS.md` §2.5.
