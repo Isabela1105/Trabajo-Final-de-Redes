@@ -117,3 +117,9 @@ def test_example_original_and_metrics(trained_checkpoint: Path, tmp_path: Path) 
     assert metrics["entrada"]["psnr"] > 0 and 0 <= metrics["restaurada"]["ssim"] <= 1
     plain = client.post("/api/restore", files={"file": ("a.png", data, "image/png")})
     assert "X-Metricas" not in plain.headers
+
+
+def test_web_files_are_not_cached(client: TestClient) -> None:
+    for path in ("/", "/static/app.js", "/static/styles.css"):
+        assert "no-cache" in client.get(path).headers["cache-control"]
+    assert "?v=" in client.get("/").text  # los recursos llevan versión

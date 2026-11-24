@@ -198,6 +198,16 @@ def create_app(
             headers["X-Metricas"] = json.dumps(metrics)
         return Response(content=buffer.getvalue(), media_type="image/png", headers=headers)
 
+    @api.middleware("http")
+    async def no_cache_web(request, call_next):  # noqa: ANN001, ANN202
+        """La página y sus archivos se revalidan siempre: tras un `git pull` el navegador
+        nunca mezcla un HTML nuevo con un JavaScript viejo guardado en caché."""
+        response = await call_next(request)
+        path = request.url.path
+        if path == "/" or path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        return response
+
     if WEB_DIR.is_dir():
         api.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 
