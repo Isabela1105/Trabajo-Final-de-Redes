@@ -60,6 +60,11 @@ class Config:
         return self.output_dir / "checkpoints"
 
     @property
+    def best_dir(self) -> Path:
+        """Generador con la mejor L1 de validación (solo pesos de G)."""
+        return self.output_dir / "best"
+
+    @property
     def log_dir(self) -> Path:
         return self.output_dir / "logs"
 

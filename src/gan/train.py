@@ -534,6 +534,27 @@ def save_checkpoint(
     return path
 
 
+def save_best(
+    manager: tf.train.CheckpointManager,
+    config: Config,
+    epoch: int,
+    val_l1: float,
+    val_metrics: dict,
+) -> None:
+    """Guarda solo el generador en `best/` con la época y las métricas de validación.
+
+    `best/` se usa igual que `checkpoints/`: `python -m src.gan.infer --checkpoint .../best`.
+    """
+    manager.save(checkpoint_number=epoch)
+    info = {
+        "epoch": int(epoch),
+        "val_l1": float(val_l1),
+        "val_psnr": float(val_metrics["psnr"]),
+        "val_ssim": float(val_metrics["ssim"]),
+    }
+    _atomic_write_text(config.best_dir / "best.json", json.dumps(info, indent=2) + "\n")
+
+
 def restore_checkpoint(
     manager: tf.train.CheckpointManager,
     checkpoint: tf.train.Checkpoint,
@@ -679,6 +700,12 @@ def train(
         checkpoint, str(config.checkpoint_dir), max_to_keep=int(config.train.get("max_to_keep", 3))
     )
 
+    # Mejor generador según L1 de validación (`best/`): la última época de una GAN no es
+    # necesariamente la mejor, porque la validación oscila de una época a otra.
+    best_manager = tf.train.CheckpointManager(
+        tf.train.Checkpoint(generator=generator), str(config.best_dir), max_to_keep=1
+    )
+
     start_epoch, best_val, waited = 0, float("inf"), 0
     if resume or resume_from:
         start_epoch, best_val, waited = restore_checkpoint(manager, checkpoint, config, resume_from)
@@ -775,6 +802,13 @@ def train(
                 config.metrics_path, rows, append=resume or bool(resume_from) or epoch > start_epoch
             )
 
+            improved = val_l1 < best_val - 1e-4
+            if improved:
+                best_val, waited = val_l1, 0
+                save_best(best_manager, config, epoch, val_l1, val_metrics)
+            else:
+                waited += 1
+
             if epoch % checkpoint_interval == 0 or epoch == int(config.train["epochs"]) - 1:
                 save_checkpoint(
                     manager, checkpoint, config, epoch, best_val=best_val, waited=waited
@@ -783,16 +817,12 @@ def train(
             print(
                 f"época {epoch:03d} | D {train_metrics.get('loss_d', 0.0):.4f} "
                 f"| G {train_metrics.get('loss_g', 0.0):.4f} | L1 val {val_l1:.4f}"
+                + (" | mejor hasta ahora" if improved else "")
             )
 
-            if patience:
-                if val_l1 < best_val - 1e-4:
-                    best_val, waited = val_l1, 0
-                else:
-                    waited += 1
-                    if waited >= patience:
-                        print(f"[train] Early stopping en la época {epoch} (paciencia {patience}).")
-                        break
+            if patience and waited >= patience:
+                print(f"[train] Early stopping en la época {epoch} (paciencia {patience}).")
+                break
     finally:
         logger.close()
 
