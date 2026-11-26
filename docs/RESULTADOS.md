@@ -408,3 +408,29 @@ desde sus 20 épocas hasta la 61 con selección por L1 de validación (igual que
 - Conclusión anterior corregida: con 20 épocas, Pix2Pix parecía ganarle a la U-Net solo porque la
   U-Net tenía menos entrenamiento.
 
+### 7.5 Más pares de entrenamiento (1 220 en vez de 366): resultado negativo
+
+**Hipótesis.** El dataset es pequeño (366 pares); más ejemplos de daño deberían generalizar mejor.
+**Prueba.** `scripts/ampliar_variantes.py` generó 10 variantes dañadas por cada una de las 122
+fotos de entrenamiento con el mismo proceso y la misma fórmula de semillas de
+`scripts/build_dataset.py`: las 366 variantes originales salieron **idénticas byte a byte** al
+dataset entregado y se agregaron 854 nuevas. Validación y prueba no se tocaron. Se continuó desde
+la época 48 del modelo vigente con los mismos hiperparámetros.
+
+| Épocas 49–57 (1 220 pares, 610 pasos por época) | L1 val | PSNR val |
+|---|---|---|
+| Mejor (49) | 0.1406 | 20.90 |
+| Última (57) | 0.1488 | 20.57 |
+| Modelo vigente (48) | **0.1369** | **21.13** |
+
+Ninguna época mejoró la validación y la tendencia fue a peor, así que se detuvo en la 57 (nueve
+épocas, unas 30 del dataset original en número de pasos). Con TTA, la época 57 da 20.48 dB en
+validación (vigente 21.20) y **20.41 dB en prueba (vigente 21.30)**. No se adopta. Registro:
+`docs/resultados/ampliado_x10_metrics.csv`.
+
+**Lectura.** Sin ampliar los datos, las épocas 49–61 de la corrida vigente tampoco superaron a la
+48. El modelo llegó a su mejor punto con esta receta: ni más épocas ni más pares lo mejoran
+mientras la tasa de aprendizaje siga constante en 0.0002 y el discriminador siga dominando. Lo
+siguiente sería cambiar la receta, no la cantidad: bajar la tasa de aprendizaje de forma
+gradual en la segunda mitad del entrenamiento, como hace el artículo original de Pix2Pix.
+

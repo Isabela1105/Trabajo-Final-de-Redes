@@ -336,10 +336,14 @@ entrenó con el mismo protocolo (selección por validación en la época 45 y TT
 mejora las métricas de fidelidad, como ya reportan Isola et al.; su aporte es perceptual. Se
 mantuvo Pix2Pix porque queda marginalmente mejor en validación (L1 0.1369 frente a 0.1378).
 
-Se probaron además dos cambios que no se adoptaron porque no mejoraron la validación de forma
+Se probaron además tres cambios que no se adoptaron porque no mejoraron la validación de forma
 evidente: agregar pares sin daño al entrenamiento (peor en validación y en prueba, incluso en las
-fotos poco dañadas) y mezclar la salida con la entrada (+0.1 dB en validación, pero con menor SSIM
-y mejora en menos de la mitad de las fotos).
+fotos poco dañadas), mezclar la salida con la entrada (+0.1 dB en validación, pero con menor SSIM
+y mejora en menos de la mitad de las fotos) y ampliar el entrenamiento de 366 a 1 220 pares con el
+mismo proceso de daños (20.48 dB en validación y 20.41 dB en prueba, ambos por debajo del modelo
+vigente). Con esta receta el modelo llegó a su mejor punto en la época 48; mejorarlo requiere
+cambiar la receta, por ejemplo reducir gradualmente la tasa de aprendizaje como en el artículo
+original, y no solo entrenar más o con más pares.
 
 El análisis de errores muestra una correlación de −0.71 entre el PSNR de la entrada y la ganancia.
 Con entradas de menos de 18 dB el modelo gana 3.6 dB, y entre 18 y 22 dB, de 1.2 a 2.3 dB. Con

@@ -237,3 +237,22 @@ def test_galeria_se_genera(built, tmp_path):
     ids = make_grid(load_manifest(manifest), salida, n=3)
     assert salida.exists() and salida.stat().st_size > 0
     assert len(ids) == 3
+
+
+# ---------- ampliación de variantes (experimento §7.5) ----------
+
+
+def test_ampliar_reproduce_las_variantes_existentes_y_agrega_nuevas(built, tmp_path):
+    from scripts.ampliar_variantes import ampliar
+
+    _, out, manifest = built
+    rows = _read_manifest(manifest)
+    n_train = len({r["source_id"] for r in rows if r["split"] == "train"})
+    counts = ampliar(manifest, tmp_path / "x5" / "train", variants=5, seed=42)
+    assert counts["fuentes"] == n_train
+    assert counts["pares"] == 5 * n_train
+    assert counts["identicas"] == counts["comprobadas"] == VARIANTS * n_train
+    nuevos = sorted(p.name for p in (tmp_path / "x5" / "train" / "input").glob("*.png"))
+    assert len(nuevos) == 5 * n_train
+    otros = {r["source_id"] for r in rows if r["split"] != "train"}
+    assert not any(n.rsplit("_v", 1)[0] in otros for n in nuevos)
