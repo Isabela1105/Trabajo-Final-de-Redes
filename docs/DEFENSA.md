@@ -300,10 +300,10 @@ Splits:         80/10/10 por fuente
 
 - [ ] Diapositivas en PDF y en el repo.
 - [ ] Notas del orador.
-- [ ] Demo local probada sin internet.
+- [x] Demo local probada sin internet (modelo de `v1.1.0`; métricas reproducidas en otro computador).
 - [ ] Video/GIF de respaldo.
-- [ ] Galería de resultados y fallos.
-- [ ] Tabla de métricas impresa o visible.
+- [x] Galería de resultados y fallos (`docs/img/results_grid_100ep.png`, `docs/img/failures_100ep.png`).
+- [x] Tabla de métricas visible (`docs/RESULTADOS.md` §6.3 y README).
 - [ ] Diagrama de arquitectura legible.
 - [ ] Cada integrante resolvió las 24 preguntas.
 - [ ] Dos ensayos con presentador aleatorio.

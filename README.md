@@ -530,7 +530,7 @@ git shortlog -sne origin/main
 - [x] Tabla del test generada con líneas base, Pix2Pix y ablación (`docs/RESULTADOS.md`).
 - [x] Ablación sin GAN entrenada y evaluada.
 - [x] Informe final oficial en Word y PDF (`report/Informe_Pix2Pix.*`), versión de trabajo (`report/Trabajo_Final_Redes.*`) e informe técnico (`report/informe.*`).
-- [ ] Tag `v1.0.0` con release y pesos del generador (lo crea la dueña del repositorio).
+- [x] Releases con pesos: `v1.0.0` (entrega anterior, 20 épocas) y `v1.1.0` (modelo vigente, `pix2pix_100ep_mejor.zip`).
 - [ ] Dos ensayos de defensa con presentador aleatorio.
 
 ---
