@@ -48,7 +48,7 @@ uvicorn app.server:app --port 8000
 | `GET` | `/api/examples` | Lista de ejemplos del selector. |
 | `GET` | `/api/examples/{nombre}` | Imagen de ejemplo (solo archivos del índice). |
 | `GET` | `/api/examples/{nombre}/original` | Original sin daño del ejemplo (si existe `target/`). |
-| `POST` | `/api/restore` | `multipart/form-data` con `file` (y opcionales `example`, `limpiar` —`true` por defecto— y `nitidez` —`false` por defecto—); responde `image/png`. Con `example`, la cabecera `X-Metricas` trae PSNR/SSIM de entrada y restaurada frente a la original. |
+| `POST` | `/api/restore` | `multipart/form-data` con `file` (y opcionales `example`, `limpiar` —`true` por defecto—, `nitidez` y `bn` —`false` por defecto—); responde `image/png`. Con `example`, la cabecera `X-Metricas` trae PSNR/SSIM de entrada y restaurada frente a la original. |
 
 Errores: `400` archivo vacío, `413` más de 20 MB, `415` no es imagen, `503` sin modelo.
 
@@ -70,6 +70,11 @@ curl -F "file=@foto.jpg" http://127.0.0.1:8000/api/restore -o restaurada.png
 6. Si la casilla *Realzar nitidez* está marcada, se aplica una máscara de enfoque (0.5). Se ve
    más definida, pero baja PSNR/SSIM porque también realza el ruido.
 7. La salida se desnormaliza, se recorta el relleno y vuelve al tamaño de entrada (acotado).
+8. Si la casilla *La foto original es en blanco y negro* está marcada, se devuelve solo la
+   luminosidad. El modelo se entrenó con el daño «desvanecido sepia» y aprendió a devolver
+   colores, así que en una foto que nunca tuvo color los inventa (alucinación). Es manual porque
+   no se puede detectar solo: algunas fotos a color muy desvanecidas del dataset tienen menos
+   color que una foto en blanco y negro envejecida. Viene apagada y no afecta la tabla.
 
 Así una foto vertical de celular no sale estirada ni rotada.
 

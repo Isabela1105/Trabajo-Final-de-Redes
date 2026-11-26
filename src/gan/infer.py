@@ -233,11 +233,18 @@ def restore_image(
     tta: bool = True,
     nitidez: float = 0.0,
     mezcla: float = 1.0,
+    blanco_y_negro: bool = False,
 ) -> Image.Image:
     """Restaura una imagen PIL de cualquier tamaño y formato.
 
     La salida tiene el tamaño de la entrada ya orientada (y acotada a `MAX_SIDE`).
     `quitar_puntos=False, tta=False` usa solo el generador, una pasada.
+
+    `blanco_y_negro=True` devuelve solo la luminosidad de la restauración. Sirve para fotos que
+    nunca tuvieron color: el modelo se entrenó con el daño «desvanecido sepia» y aprendió a
+    devolver colores, así que en una foto en blanco y negro los inventa. Es manual porque no se
+    puede detectar solo: hay fotos a color muy desvanecidas con menos color que una foto en blanco
+    y negro envejecida, y ahí sí hay que devolverlo.
     """
     prepared = prepare_input(image, size)
     pred = predict(
@@ -249,7 +256,8 @@ def restore_image(
         mezcla=mezcla,
     )
     square = tensor_to_image(pred).resize((prepared.side, prepared.side), Image.Resampling.BICUBIC)
-    return square.crop(prepared.box)
+    restored = square.crop(prepared.box)
+    return restored.convert("L").convert("RGB") if blanco_y_negro else restored
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -267,6 +275,11 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--nitidez", type=float, default=0.0, help="Máscara de enfoque (0 = no; 0.5 = media)."
     )
+    parser.add_argument(
+        "--blanco-y-negro",
+        action="store_true",
+        help="La foto original no tenía color: devolver solo la luminosidad.",
+    )
     args = parser.parse_args(argv)
 
     generator, config = load_generator(args.checkpoint, args.config)
@@ -278,6 +291,7 @@ def main(argv: list[str] | None = None) -> None:
             quitar_puntos=not args.sin_limpieza,
             tta=not args.sin_tta,
             nitidez=args.nitidez,
+            blanco_y_negro=args.blanco_y_negro,
         )
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)

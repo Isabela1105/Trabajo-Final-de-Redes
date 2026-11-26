@@ -164,6 +164,7 @@ async function restore() {
   if (currentExample) body.append("example", currentExample);
   body.append("limpiar", $("limpiar").checked ? "true" : "false");
   body.append("nitidez", $("nitidez").checked ? "true" : "false");
+  body.append("bn", $("bn").checked ? "true" : "false");
   try {
     const res = await fetch("/api/restore", { method: "POST", body });
     if (!res.ok) {

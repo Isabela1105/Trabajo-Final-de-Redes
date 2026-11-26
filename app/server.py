@@ -167,6 +167,7 @@ def create_app(
         example: str | None = Form(None),  # noqa: B008
         limpiar: bool = Form(True),  # noqa: B008
         nitidez: bool = Form(False),  # noqa: B008
+        bn: bool = Form(False),  # noqa: B008
     ) -> Response:
         """Devuelve el PNG restaurado.
 
@@ -193,6 +194,7 @@ def create_app(
             holder.image_size,
             quitar_puntos=limpiar,
             nitidez=NITIDEZ if nitidez else 0.0,
+            blanco_y_negro=bn,
         )
         buffer = io.BytesIO()
         restored.save(buffer, format="PNG")
