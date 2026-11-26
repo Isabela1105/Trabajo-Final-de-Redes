@@ -207,8 +207,9 @@ al docente y revela huecos de comprensión.
 
 28. **¿Qué probaron que no funcionó?**
     Pares sin daño para que no sobre-corrija: peor en validación y en prueba, se descartó (§7.1).
-    Mezclar salida y entrada: mejora pequeña y dudosa en validación, no se adoptó (§7.2). Reportar
-    lo que no funcionó también es parte del análisis.
+    Mezclar salida y entrada: mejora pequeña y dudosa en validación, no se adoptó (§7.2). Ampliar
+    el entrenamiento de 366 a 1 220 pares con el mismo proceso de daños: peor en validación y en
+    prueba, no se adoptó (§7.5). Reportar lo que no funcionó también es parte del análisis.
 
 ### Participación y repo
 

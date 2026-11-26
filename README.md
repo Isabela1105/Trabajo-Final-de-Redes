@@ -140,7 +140,9 @@ modelo de 20 épocas. Con la selección por validación:
 
 **Análisis de errores:** mejora todos los tipos de daño, sobre todo rayones, contraste y color
 (+2.0 a +2.8 dB), y menos JPEG, polvo y baja resolución. El modo de falla: **sobre-corrige fotos
-poco dañadas** (entrada ≥ 22 dB: −2.5 dB en 10 de 11) porque nunca vio pares sin daño. Todo en
+poco dañadas** (entrada ≥ 22 dB: −2.5 dB en 10 de 11) porque nunca vio pares sin daño. Se probaron
+y descartaron, por no mejorar la validación: pares sin daño, mezcla salida/entrada y
+ampliar el entrenamiento a 1 220 pares (§7). Todo en
 [`docs/RESULTADOS.md` §6](docs/RESULTADOS.md#6-nueva-sustentación-100-épocas-selección-por-validación-y-tta).
 
 ![Curvas 100 épocas](docs/img/curvas_100ep.png)
