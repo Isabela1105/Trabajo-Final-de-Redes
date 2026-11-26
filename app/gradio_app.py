@@ -23,16 +23,19 @@ def build_interface(checkpoint: str):
 
     generator, config = load_generator(checkpoint)
 
-    def run(image, limpiar):
+    def run(image, limpiar, bn):
         if image is None:
             return None
-        return restore_image(generator, image, config.image_size, quitar_puntos=limpiar)
+        return restore_image(
+            generator, image, config.image_size, quitar_puntos=limpiar, blanco_y_negro=bn
+        )
 
     return gr.Interface(
         fn=run,
         inputs=[
             gr.Image(type="pil", label="Foto degradada"),
             gr.Checkbox(value=True, label="Quitar puntos de polvo"),
+            gr.Checkbox(value=False, label="La foto original es en blanco y negro"),
         ],
         outputs=gr.Image(type="pil", label="Restaurada"),
         title="Restauración de fotografías con Pix2Pix",

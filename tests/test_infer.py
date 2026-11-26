@@ -208,3 +208,11 @@ def test_mezcla_interpolates_between_output_and_input() -> None:
     mixed = predict(Const(), x, quitar_puntos=False, tta=False, mezcla=0.8).numpy()
     np.testing.assert_allclose(full, 0.5)
     np.testing.assert_allclose(mixed, 0.8 * 0.5 + 0.2 * -0.5, atol=1e-6)
+
+
+def test_blanco_y_negro_returns_gray_same_size(trained_checkpoint: Path) -> None:
+    generator, config = load_generator(trained_checkpoint)
+    image = Image.fromarray(np.full((40, 56, 3), (150, 120, 90), np.uint8))  # sepia
+    out = np.asarray(restore_image(generator, image, config.image_size, blanco_y_negro=True))
+    assert out.shape == (40, 56, 3)
+    assert (out[..., 0] == out[..., 1]).all() and (out[..., 1] == out[..., 2]).all()
