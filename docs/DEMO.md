@@ -80,12 +80,14 @@ Así una foto vertical de celular no sale estirada ni rotada.
 
 ## 5. Ejecutar en Colab (plan B)
 
+Abrir [`notebooks/sustentacion_colab.ipynb`](https://colab.research.google.com/github/Isabela1105/Trabajo-Final-de-Redes/blob/main/notebooks/sustentacion_colab.ipynb) y ejecutar todas las celdas: clona el
+repositorio, valida `datasetv1.zip` desde Drive (o lo pide para subirlo), descarga el modelo del
+release `v1.1.0`, reproduce las métricas del test y abre la demo con un enlace público de Gradio.
+
+Fuera del notebook, la demo de respaldo es:
+
 ```python
-!git clone https://github.com/Isabela1105/Trabajo-Final-de-Redes.git
-%cd Trabajo-Final-de-Redes
-!pip -q install fastapi uvicorn python-multipart gradio
-# Gradio crea un enlace público temporal, útil si el portátil de la defensa falla:
-!python -m app.gradio_app --checkpoint /content/drive/MyDrive/<ruta>/checkpoints
+!python -m app.gradio_app --checkpoint outputs/pix2pix_100ep_mejor/best --share
 ```
 
 ## 6. Plan C

@@ -5,6 +5,7 @@ montan Drive, preparan rutas y llaman a los módulos del repositorio.
 
 | Notebook | Para qué | Estado |
 |---|---|---|
+| **[`sustentacion_colab.ipynb`](https://colab.research.google.com/github/Isabela1105/Trabajo-Final-de-Redes/blob/main/notebooks/sustentacion_colab.ipynb)** | **Sustentación.** No entrena: descarga el modelo vigente del release `v1.1.0`, valida el dataset, reproduce las métricas (21.30 dB con TTA), muestra curvas, galerías y análisis de errores, y abre la demo con Gradio. | Listo. ~5 min con GPU T4. |
 | **`pix2pix_colab.ipynb`** | **Notebook de trabajo.** Dataset, entrenamiento base, ablación, experimento de nitidez (3b/5b, opcional), curvas, evaluación del test con tabla y figuras automáticas, demo y descarga. | Listo. Con las opciones por defecto solo evalúa el checkpoint que ya existe. |
 | `pix2pix_entrenamiento_colab.ipynb` | **Evidencia.** La corrida base de 20 épocas tal como la ejecutó Isabela Cabezas, con sus salidas. | Ejecutado (522 s; val L1 0.1482, PSNR 20.26 dB, SSIM 0.5077). No se edita. |
 

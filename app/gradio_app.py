@@ -30,28 +30,33 @@ def build_interface(checkpoint: str):
             generator, image, config.image_size, quitar_puntos=limpiar, blanco_y_negro=bn
         )
 
-    return gr.Interface(
-        fn=run,
-        inputs=[
+    kwargs = {
+        "fn": run,
+        "inputs": [
             gr.Image(type="pil", label="Foto degradada"),
             gr.Checkbox(value=True, label="Quitar puntos de polvo"),
             gr.Checkbox(value=False, label="La foto original es en blanco y negro"),
         ],
-        outputs=gr.Image(type="pil", label="Restaurada"),
-        title="Restauración de fotografías con Pix2Pix",
-        description="U-Net + PatchGAN entrenados con el dataset propio del curso.",
-        allow_flagging="never",
-    )
+        "outputs": gr.Image(type="pil", label="Restaurada"),
+        "title": "Restauración de fotografías con Pix2Pix",
+        "description": "U-Net + PatchGAN entrenados con el dataset propio del curso.",
+    }
+    # Gradio 4 usa `allow_flagging`; Gradio 5 y 6 (lo que instala Colab hoy) `flagging_mode`.
+    try:
+        return gr.Interface(**kwargs, flagging_mode="never")
+    except TypeError:
+        return gr.Interface(**kwargs, allow_flagging="never")
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Demo Gradio (respaldo).")
     parser.add_argument("--checkpoint", default=os.environ.get("PIX2PIX_CHECKPOINT"))
     parser.add_argument("--port", type=int, default=7860)
+    parser.add_argument("--share", action="store_true", help="Enlace público temporal (Colab).")
     args = parser.parse_args(argv)
     if not args.checkpoint:
         parser.error("Indique --checkpoint o PIX2PIX_CHECKPOINT.")
-    build_interface(args.checkpoint).launch(server_port=args.port)
+    build_interface(args.checkpoint).launch(server_port=args.port, share=args.share)
 
 
 if __name__ == "__main__":
