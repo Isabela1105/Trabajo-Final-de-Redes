@@ -332,7 +332,8 @@ con `--fid`. Atajos: `make eval`, `make results`, `make demo`.
 ├── guias/                        # guía individual por integrante
 ├── notebooks/                    # Colab: entrenamiento, ablación, evaluación y demo
 ├── report/
-│   ├── Trabajo_Final_Redes.docx  # informe final (Word) y su PDF
+│   ├── Informe_Pix2Pix.docx      # informe final oficial (Word) y su PDF
+│   ├── Trabajo_Final_Redes.docx  # versión de trabajo del informe y su PDF
 │   ├── informe.md · informe.pdf  # informe técnico del repositorio
 │   └── referencias.bib
 ├── scripts/
@@ -485,7 +486,8 @@ Configuración y solución de problemas: [`docs/CI_CD.md`](docs/CI_CD.md).
 
 ## 14. Informe y sustentación
 
-- **Informe final (Word):** [`report/Trabajo_Final_Redes.docx`](report/Trabajo_Final_Redes.docx) · [PDF](report/Trabajo_Final_Redes.pdf).
+- **Informe final (oficial):** [`report/Informe_Pix2Pix.pdf`](report/Informe_Pix2Pix.pdf) · [Word](report/Informe_Pix2Pix.docx).
+- Versión de trabajo del informe: [`report/Trabajo_Final_Redes.docx`](report/Trabajo_Final_Redes.docx) · [PDF](report/Trabajo_Final_Redes.pdf); informe técnico en Markdown: [`report/informe.md`](report/informe.md).
   Versión pública: sin las 12 fotos antiguas reales, que tienen licencia sin verificar.
 - Informe técnico del repositorio: [`report/informe.md`](report/informe.md) → [`report/informe.pdf`](report/informe.pdf).
 - Estructura y responsables: [`docs/INFORME.md`](docs/INFORME.md).
@@ -527,7 +529,7 @@ git shortlog -sne origin/main
 - [x] Demo web (FastAPI) + respaldo Gradio.
 - [x] Tabla del test generada con líneas base, Pix2Pix y ablación (`docs/RESULTADOS.md`).
 - [x] Ablación sin GAN entrenada y evaluada.
-- [x] Informe final en Word y PDF (`report/Trabajo_Final_Redes.*`) e informe técnico (`report/informe.*`).
+- [x] Informe final oficial en Word y PDF (`report/Informe_Pix2Pix.*`), versión de trabajo (`report/Trabajo_Final_Redes.*`) e informe técnico (`report/informe.*`).
 - [ ] Tag `v1.0.0` con release y pesos del generador (lo crea la dueña del repositorio).
 - [ ] Dos ensayos de defensa con presentador aleatorio.
 

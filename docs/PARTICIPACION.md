@@ -16,16 +16,16 @@ En GitHub: **Insights → Contributors** y **Pull requests → Author / Reviewer
 
 ## 1. Tabla general
 
-Estado de `main` al 21 de noviembre de 2026 (último merge `#29`) más los PRs de cierre abiertos
-desde la cuenta `@Juansec01` el 22 de noviembre.
+Estado de `main` al 26 de noviembre de 2026 (último merge `#57`). PRs mergeados por autor:
+`gh pr list --state merged --author <usuario>` o *Pull requests → Closed* en GitHub.
 
 | Integrante | GitHub | Rol asignado | PRs mergeados en `main` | Commits en `main` | Aporte verificable |
 |---|---|---|---|---|---|
 | Isabella Ortiz Hernandez | @Isabellaortizher-collab | Datos y dataset | #10, #11, #12, #15, #16, #17 | 6 | Dataset completo: degradaciones, build con manifiesto, estadísticas, conjunto real, alfa/EXIF, cargador `tf.data`. |
-| Juan Pablo Dávila Moncayo | @Juanpablodavila | Generador U-Net | — | 0 | Sin commits ni PRs en el repositorio. El generador lo implementó Jeremy (#18). |
+| Juan Pablo Dávila Moncayo | @JP-64-3010 | Generador U-Net | #56 | 1 | Subió el informe final en Word y PDF (`report/Informe_Pix2Pix.*`, #56). El generador lo implementó Jeremy (#18). |
 | Jeremy Santiago Caicedo Cabezas | @JeremyCaicedo | Discriminador y pérdidas | #18, #21 | 3 | Bloques y generador U-Net (#18), discriminador PatchGAN y pérdidas (#21, issue #20), ajuste directo en `losses.py`. |
 | Cristian Fabian Muñoz Piedrahita | @CristianMP355 | Entrenamiento | #25, #26, #27, #28, #29 | 5 | Bucle D→G, smoke test, integración real, métricas y ablación, checkpoints atómicos para Colab. |
-| Juan Sebastian Castillo Acevedo | @Juansec01 | Evaluación, inferencia y demo | #30–#36 (abiertos) + andamiaje inicial | 2 | Estructura inicial del repo (CI, plantillas, docs, configs, guías) + PRs de cierre de la sección 3. |
+| Juan Sebastian Castillo Acevedo | @Juansec01 | Evaluación, inferencia y demo | #30–#42, #46–#55, #57 + andamiaje inicial | 61 | Estructura inicial del repo; métricas, evaluación, inferencia y demo; corridas de 100 épocas, selección por validación, TTA, limpieza de polvo, ablación justa y experimentos (`docs/RESULTADOS.md` §6–7). |
 | Isabela Cabezas Obregón | @Isabela1105 | CI/CD, integración e informe | #14 | 1 | `.gitattributes`; ejecutó la corrida base en Colab (20 épocas, `notebooks/pix2pix_entrenamiento_colab.ipynb`). Dueña del repositorio. |
 
 ## 2. Detalle por integrante
@@ -44,14 +44,13 @@ desde la cuenta `@Juansec01` el 22 de noviembre.
 - **Resultado:** 152 fuentes → 456 pares (366 / 45 / 45), split 80/10/10 por fuente, sin fuga.
 - **Informe y defensa:** §3 Dataset.
 
-### Juan Pablo Dávila Moncayo (@Juanpablodavila) · código 2216168
+### Juan Pablo Dávila Moncayo (@JP-64-3010) · código 2216168
 
 - **Rol asignado:** generador U-Net (B2–B6 en `docs/PLAN_COMMITS.md`).
-- **Evidencia en el repositorio:** ninguna a la fecha. Los PRs del generador (#18 en `main` y
-  #22 en la rama `Jeremycaicedo-patch-1`) son de Jeremy y no se reasignan.
-- **Pendiente para que su participación conste:** abrir PRs propios con su cuenta (por ejemplo
-  los EXTRA-1 a EXTRA-6 de su plan: contrato de configuración, robustez, ablación sin skip,
-  benchmark, guía de fallos y FAQ del generador).
+- **PR:** #56 `docs(report): agregar informe final Pix2Pix` (commit `c2682fd`): informe final en
+  Word y PDF, `report/Informe_Pix2Pix.docx` y `report/Informe_Pix2Pix.pdf`.
+- **Código:** los PRs del generador (#18 en `main` y #22 en la rama `Jeremycaicedo-patch-1`) son
+  de Jeremy y no se reasignan.
 - **Informe y defensa asignados:** §4.2 Generador U-Net.
 
 ### Jeremy Santiago Caicedo Cabezas (@JeremyCaicedo) · código 2210721
